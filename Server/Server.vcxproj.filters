@@ -13,5 +13,36 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="ThirdParties">
+      <UniqueIdentifier>{0234addf-69ac-4fda-87e7-9e9d97fdd60a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\GameManager.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameWindow.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_reader.cpp">
+      <Filter>ThirdParties</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_value.cpp">
+      <Filter>ThirdParties</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_writer.cpp">
+      <Filter>ThirdParties</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\GameManager.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameWindow.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
