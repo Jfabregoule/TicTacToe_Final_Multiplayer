@@ -1,6 +1,7 @@
 #pragma once
 
 class GameWindow;
+class Connect;
 
 #include <SFML/Audio/Music.hpp>
 #include "../thirdparties/jsoncpp/include/json/json.h"
@@ -39,6 +40,10 @@ private:
 	// Textures attributes
 
 	std::vector<sf::Sprite*>	m_sprites;
+
+	// Connexion attributes
+
+	Connect*					m_connect;
 
 public:
 
@@ -84,6 +89,10 @@ private:
 	void		Player1WinScreen();
 	void		Player2WinScreen();
 	void		TieScreen();
+
+	// Connexion related
+
+	void InitConnexion();
 
 	// Main methods
 

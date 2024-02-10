@@ -2,31 +2,36 @@
 #include "../include/Connect.h"
 #include <stdio.h>
 #include <stdlib.h>
-#define DEFAULT_PORT "21"
-#define DEFAULT_BUFLEN 512
+#include <cstring>
 
-const char* SERVER_IP_ADDR = "10.1.144.29";
+const char* SERVER_IP_ADDR = "192.168.1.136";
+
+#define DEFAULT_BUFLEN 1024
+#define DEFAULT_PORT "21"
 
 Connect::Connect() : ConnectSocket(INVALID_SOCKET) {
-    recvbuf[DEFAULT_BUFLEN];
     recvbuflen = DEFAULT_BUFLEN;
     initialize();
 };
 
 Connect::~Connect() {
-
+    CleanupSocket(ConnectSocket);
+    CleanupWinsock();
 };
 
 bool Connect::InitializeWinSock() {
-    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (iResult != 0) {
         printf("WSAStartup failed: %d\n", iResult);
         return false;
     }
     return true;
-};
+}
 
 SOCKET Connect::CreateAndConnectSocket(const char* serverAddress) {
+    struct addrinfo* result = NULL,
+        * ptr = NULL,
+        hints;
 
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -34,7 +39,7 @@ SOCKET Connect::CreateAndConnectSocket(const char* serverAddress) {
     hints.ai_protocol = IPPROTO_TCP;
 
     // Resolve the server address and port
-    iResult = getaddrinfo(serverAddress, DEFAULT_PORT, &hints, &result);
+    int iResult = getaddrinfo(serverAddress, DEFAULT_PORT, &hints, &result);
     if (iResult != 0) {
         printf("getaddrinfo failed: %d\n", iResult);
         return INVALID_SOCKET;
@@ -69,30 +74,6 @@ SOCKET Connect::CreateAndConnectSocket(const char* serverAddress) {
     return ConnectSocket;
 }
 
-bool Connect::CreateHiddenWindow() {
-    WNDCLASS clientWindowClass = { 0 };
-    clientWindowClass.lpfnWndProc = ClientWindowProc;
-    clientWindowClass.hInstance = GetModuleHandle(NULL);
-    clientWindowClass.lpszClassName = L"MyClientWindowClass";
-
-    if (clientWindowClass.hInstance == NULL) {
-        printf("GetModuleHandle failed with error: %d\n", GetLastError());
-        return false;
-    }
-
-    if (!RegisterClass(&clientWindowClass)) {
-        printf("RegisterClass failed with error: %d\n", GetLastError());
-        return false;
-    }
-
-    hWnd = CreateWindowEx(0, L"MyClientWindowClass", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, clientWindowClass.hInstance, NULL);
-    if (hWnd == NULL) {
-        printf("CreateWindowEx failed with error: %d\n", GetLastError());
-        return false;
-    }
-    return true;
-}
-
 bool Connect::AssociateSocketWithWindow(HWND window, LONG events) {
     if (WSAAsyncSelect(ConnectSocket, window, WM_USER + 1, events) == SOCKET_ERROR) {
         printf("WSAAsyncSelect failed with error: %d\n", WSAGetLastError());
@@ -118,12 +99,7 @@ int Connect::initialize() {
         CleanupWinsock();
         return 1;
     }
-    if (!CreateHiddenWindow()){
-        CleanupSocket(ConnectSocket);
-        CleanupWinsock();
-        return 1;
-    }
-    if (!AssociateSocketWithWindow(hWnd, FD_READ | FD_CLOSE)) {
+    if (!AssociateSocketWithWindow(GetConsoleWindow(), FD_READ | FD_CLOSE)) {
         CleanupSocket(ConnectSocket);
         CleanupWinsock();
         return 1;
@@ -132,7 +108,7 @@ int Connect::initialize() {
 }
 
 int Connect::Send(const char* buff) {
-    iResult = send(ConnectSocket,buff,strlen(buff), 0);
+    int iResult = send(ConnectSocket, buff, strlen(buff), 0);
     if (iResult == SOCKET_ERROR) {
         printf("send failed: %d\n", WSAGetLastError());
         CleanupSocket(ConnectSocket);
@@ -140,34 +116,5 @@ int Connect::Send(const char* buff) {
         return 1;
     }
     printf("Bytes Sent: %d\n", iResult);
-    return 0;
-}
-
-LRESULT CALLBACK Connect::ClientWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    
-    Connect* pClient = (Connect*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-
-    switch (uMsg) {
-    case WM_USER + 1:
-
-        if (WSAGETSELECTEVENT(lParam) == FD_READ) {
-            SOCKET sock = wParam;
-            char buffer[DEFAULT_BUFLEN];
-            int bytesRead = recv(sock, buffer, DEFAULT_BUFLEN, 0);
-            if (bytesRead > 0) {
-                printf("Bytes received: %d\n", bytesRead);
-                printf("Data received: %s\n", buffer);
-            }
-        }
-        else if (WSAGETSELECTEVENT(lParam) == FD_CLOSE) {
-            printf("Connection closed\n");
-            closesocket(wParam);
-            PostQuitMessage(0);
-        }
-        break;
-    default:
-        return DefWindowProc(hwnd, uMsg, wParam, lParam);
-        break;
-    }
     return 0;
 }

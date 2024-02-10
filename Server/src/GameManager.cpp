@@ -5,6 +5,7 @@
 #include "../include/GameManager.h"
 #include "../include/GameWindow.h"
 #include "../thirdparties/jsoncpp/include/json/json.h"
+#include "../include/ConnectServer.h"
 
 const float INPUT_BLOCK_TIME = 0.8f;
 
@@ -28,6 +29,8 @@ GameManager::GameManager() {
 	m_music = new Music();
 
 	m_previousClickState = false;
+
+	m_connectServer = new ConnectServer;
 }
 
 /*
@@ -475,6 +478,20 @@ void GameManager::HandleEvents() {
 			m_previousClickState = currentClickState;
 		}
 	}
+}
+
+void GameManager::InitServerConnexion() {
+	// Créer une instance de ConnectServer
+	ConnectServer* server = new ConnectServer();
+
+	// Vérifier si l'initialisation du serveur s'est bien passée
+	if (!server->Initialize()) {
+		std::cout << "Erreur lors de l'initialisation du serveur." << std::endl;
+		delete server;
+		return;
+	}
+
+	std::cout << "Connection initialized successfully." << std::endl;
 }
 
 void GameManager::Start() {

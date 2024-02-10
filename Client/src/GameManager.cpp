@@ -5,6 +5,7 @@
 #include "../include/GameManager.h"
 #include "../include/GameWindow.h"
 #include "../thirdparties/jsoncpp/include/json/json.h"
+#include "../include/Connect.h"
 
 const float INPUT_BLOCK_TIME = 0.8f;
 
@@ -28,6 +29,8 @@ GameManager::GameManager() {
 	m_music = new Music();
 
 	m_previousClickState = false;
+
+	m_connect = new Connect;
 }
 
 /*
@@ -477,12 +480,26 @@ void GameManager::HandleEvents() {
 	}
 }
 
+void GameManager::InitConnexion() {
+	// Initialize the connection
+	int initResult = m_connect->initialize();
+
+	// Check if initialization was successful
+	if (initResult != 0) {
+		std::cerr << "Error initializing connection." << std::endl;
+		exit(1); // Exit the program if initialization fails
+	}
+
+	std::cout << "Connection initialized successfully." << std::endl;
+}
+
 void GameManager::Start() {
 	float	fps = 0;
 
 	Generate();
 	Menu();
 	PlayMusic("rsrc/music/theme.ogg");
+	InitConnexion();
 	while (m_running)
 	{
 		RefreshWindow();
