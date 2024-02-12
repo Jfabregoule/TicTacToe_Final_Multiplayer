@@ -29,6 +29,9 @@ GameManager::GameManager() {
 	m_playerNumberSelf = -1;
 	m_playerNumberEnemy = -1;
 
+	m_player1 = 0;
+	m_player2 = 0;
+
 	m_playerSpectator = false;
 
 	username = "";
@@ -190,10 +193,10 @@ void GameManager::GenerateSprites() {
 
 void GameManager::GenerateText() {
 	sf::Text textInstruction("Entrez votre nom d'utilisateur :", font, 30);
-	textInstruction.setPosition(50, 50);
+	textInstruction.setPosition(100, 200);
 
 	sf::Text textUsername("", font, 30);
-	textUsername.setPosition(50, 80);
+	textUsername.setPosition(100, 250);
 
 	sf::Text score("", font, 20);
 	score.setPosition(10, 10);
@@ -260,7 +263,7 @@ void GameManager::ChooseMenu() {
 
 	if (position.y <= windowSize.y / 2)
 	{
-		if (m_playerSpectator)
+		if (m_player1 == 1 and m_player2 == 1)
 		{
 			m_menu = false;
 			m_choiceScreen = false;
@@ -469,9 +472,53 @@ void GameManager::FormatAndSendMap() {
 	}
 }
 
+void GameManager::FormatAndSendPlayer() {
+	// Création d'un objet Json::Value
+	const char* formatedJson;
+	Json::Value root;
+	int			sendResult;
+
+
+	// Ajout du joueur courant au JSON
+	if (m_player1 == 1)
+	{
+		root["Player1"] = 1;
+	}
+	else {
+		root["Player1"] = 0;
+	}
+	if (m_player2 == 1) {
+		root["Player2"] = 1;
+	}
+	else {
+		root["Player2"] = 0;
+	}
+
+	// Création d'un objet Json::StyledWriter pour une sortie formatée
+	Json::StyledWriter writer;
+
+	// Convertir le Json::Value en chaîne JSON formatée
+	std::string jsonOutput = writer.write(root);
+
+	// Allouer de la mémoire pour la chaîne JSON en tant que const char*
+	char* jsonString = new char[jsonOutput.size() + 1];
+	strcpy_s(jsonString, jsonOutput.size() + 1, jsonOutput.c_str());
+
+	formatedJson = jsonString;
+
+	sendResult = m_connect->Send(formatedJson);
+
+	delete[] jsonString;
+
+	if (sendResult != 0) {
+		std::cerr << "Error sending JSON to client." << std::endl;
+		// Gérer l'erreur de manière appropriée dans votre application
+	}
+}
+
 void GameManager::Place() {
 	char			c;
-	char*			toReplace = nullptr;
+	char* toReplace = nullptr;
 	sf::Vector2i	position = sf::Mouse::getPosition(*m_window->w_window);
 	sf::Vector2u	windowSize = m_window->w_window->getSize();
 
@@ -510,10 +557,12 @@ void GameManager::EndCheck() {
 	// Check rows
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
+			Generate();
 			Player1WinScreen();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
+			Generate();
 			Player2WinScreen();
 			return;
 		}
@@ -522,10 +571,12 @@ void GameManager::EndCheck() {
 	// Check columns
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
+			Generate();
 			Player1WinScreen();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
+			Generate();
 			Player2WinScreen();
 			return;
 		}
@@ -534,11 +585,13 @@ void GameManager::EndCheck() {
 	// Check diagonals
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
+		Generate();
 		Player1WinScreen();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
+		Generate();
 		Player2WinScreen();
 		return;
 	}
@@ -555,6 +608,7 @@ void GameManager::EndCheck() {
 	}
 
 	if (isTie) {
+		Generate();
 		TieScreen();
 	}
 }
@@ -582,19 +636,6 @@ void GameManager::HandleEvents() {
 	}
 }
 
-void GameManager::InitConnexion() {
-	// Initialize the connection
-	int initResult = m_connect->initialize();
-
-	// Check if initialization was successful
-	if (initResult != 0) {
-		std::cerr << "Error initializing connection." << std::endl;
-		exit(1); // Exit the program if initialization fails
-	}
-
-	std::cout << "Connection initialized successfully." << std::endl;
-}
-
 void GameManager::Start() {
 	float	fps = 0;
 
@@ -602,7 +643,6 @@ void GameManager::Start() {
 	//Menu();
 	//PlayMusic("rsrc/music/theme.ogg");
 	enterNameScreen();
-	InitConnexion();
 	while (m_running)
 	{
 		RefreshWindow();
@@ -632,15 +672,21 @@ void GameManager::ChoosePlayer() {
 	if (position.y <= windowSize.y / 2) {
 		if (PlayerVerification(1))
 		{
+			m_player1 = 1;
+			FormatAndSendPlayer();
 			m_menu = false;
 			m_choiceScreen = false;
+			Generate();
 		}
 	}
 	else if (position.y > windowSize.y / 2) {
 		if (PlayerVerification(2))
 		{
+			m_player2 = 1;
+			FormatAndSendPlayer();
 			m_menu = false;
 			m_choiceScreen = false;
+			Generate();
 		}
 	}
 }
@@ -650,7 +696,7 @@ void GameManager::enterNameScreen() {
 	sf::Texture	menuBackgroundTexture;
 	sf::Sprite	menuBackgroundSprite;
 
-	if (!menuBackgroundTexture.loadFromFile("rsrc/img/menu/background.png")) {
+	if (!menuBackgroundTexture.loadFromFile("rsrc/img/menu/PlayerName.png")) {
 		std::cout << "Error loading menu background image" << std::endl;
 		exit(1);
 	}
@@ -728,7 +774,8 @@ void GameManager::ChoicePlayerScreen() {
 }
 
 bool GameManager::PlayerVerification(int playerNumber) {
-	if (m_playerNumberEnemy == -1) {
+	if ((m_player1 == 0 and playerNumber == 1) or (m_player2 == 0 and playerNumber == 2))
+	{
 		m_playerNumberSelf = playerNumber;
 
 		if (playerNumber == 1) {
@@ -738,16 +785,28 @@ bool GameManager::PlayerVerification(int playerNumber) {
 			m_playerNumberEnemy = 1;
 		}
 
+		/*if (m_playerNumberEnemy == -1) {
+
+			if (playerNumber == 1) {
+				m_playerNumberEnemy = 2;
+			}
+			else {
+				m_playerNumberEnemy = 1;
+			}
+
+			return true;
+		}
+		else if (m_playerNumberEnemy == 1 && playerNumber == 2) {
+			m_playerNumberSelf = 2;
+			return true;
+		}
+		else if (m_playerNumberEnemy == 2 && playerNumber == 1) {
+			m_playerNumberSelf = 1;
+			return true;
+		}*/
 		return true;
 	}
-	else if (m_playerNumberEnemy == 1 && playerNumber == 2) {
-		m_playerNumberSelf = 2;
-		return true;
-	}
-	else if (m_playerNumberEnemy == 2 && playerNumber == 1) {
-		m_playerNumberSelf = 1;
-		return true;
-	}
+	
 	return false;
 }
 

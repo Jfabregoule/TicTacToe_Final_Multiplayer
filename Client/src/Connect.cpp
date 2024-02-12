@@ -7,7 +7,7 @@
 #include "iostream"
 
 const char* DEFAULT_PORT = "21";
-const char* SERVER_IP_ADDR = "192.168.1.136";
+const char* SERVER_IP_ADDR = "10.1.144.28";
 #define DEFAULT_BUFLEN 512
 
 Connect::Connect(GameManager& gm) : gameManager(gm), ConnectSocket(INVALID_SOCKET) {
@@ -142,7 +142,7 @@ int Connect::initialize() {
 }
 
 void Connect::HandleAccept(SOCKET sock) {
-    
+
 }
 
 void Connect::HandleRead(SOCKET sock) {
@@ -192,6 +192,17 @@ void Connect::HandleRead(SOCKET sock) {
         }
         if (root.isMember("CurrentPlayer"))
             gameManager.m_currentPlayer = root["CurrentPlayer"].asInt();
+        if (root.isMember("Player1") || root.isMember("Player2"))
+        {
+            if (root["Player1"] == 1)
+            {
+                gameManager.m_player1 = 1;
+            }
+            if (root["Player2"] == 1)
+            {
+                gameManager.m_player2 = 1;
+            }
+        }
 
         // Afficher la carte mise à jour
         std::cout << "Carte mise à jour : " << std::endl;

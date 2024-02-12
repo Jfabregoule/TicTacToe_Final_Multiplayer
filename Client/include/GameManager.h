@@ -62,6 +62,9 @@ public:
 	int							m_currentTurn;
 	int							m_currentPlayer;
 
+	int							m_player1;
+	int							m_player2;
+
 	// Constructor/Destructor
 
 	GameManager();
@@ -109,8 +112,8 @@ private:
 
 	// Connexion related
 
-	void		InitConnexion();
 	void		FormatAndSendMap();
+	void		FormatAndSendPlayer();
 
 	// Main methods
 
@@ -119,7 +122,7 @@ private:
 	void		HandleEvents();
 
 	// Multiplayer Methods
-	char* convertJsonToString(const Json::Value& json, std::string key);
+	char*		convertJsonToString(const Json::Value& json, std::string key);
 	Json::Value convertStringToJson(const std::string& jsonString);
 	void		convertJsonToMap(Json::Value& json);
 	void		ChoicePlayerScreen();

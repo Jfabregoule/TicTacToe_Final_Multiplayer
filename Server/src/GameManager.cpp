@@ -410,11 +410,13 @@ void GameManager::EndCheck() {
 	// Check rows
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
-			Player1WinScreen();
+			Generate();
+			m_connectServer->Update();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
-			Player2WinScreen();
+			Generate();
+			m_connectServer->Update();
 			return;
 		}
 	}
@@ -422,11 +424,13 @@ void GameManager::EndCheck() {
 	// Check columns
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
-			Player1WinScreen();
+			Generate();
+			m_connectServer->Update();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
-			Player2WinScreen();
+			Generate();
+			m_connectServer->Update();
 			return;
 		}
 	}
@@ -434,12 +438,14 @@ void GameManager::EndCheck() {
 	// Check diagonals
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
-		Player1WinScreen();
+		Generate();
+		m_connectServer->Update();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
-		Player2WinScreen();
+		Generate();
+		m_connectServer->Update();
 		return;
 	}
 
@@ -455,7 +461,8 @@ void GameManager::EndCheck() {
 	}
 
 	if (isTie) {
-		TieScreen();
+		Generate();
+		m_connectServer->Update();
 	}
 }
 
@@ -483,7 +490,8 @@ void GameManager::Start() {
 	float	fps = 0;
 
 	Generate();
-	Menu();
+	//Menu();
+	m_menu = false;
 	PlayMusic("rsrc/music/theme.ogg");
 	while (m_running)
 	{

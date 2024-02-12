@@ -13,6 +13,7 @@
 #define DEFAULT_BUFLEN 512
 
 ConnectServer::ConnectServer(GameManager& gm) : gameManager(gm), serverSocket(INVALID_SOCKET), hWnd(NULL) {
+    clientSockets.clear();
     Initialize();
 }
 
@@ -148,7 +149,11 @@ void ConnectServer::Update() {
     root["CurrentPlayer"] = gameManager.m_currentPlayer;
     std::string jsonToSend = root.toStyledString();
 
+    std::cout << clientSockets.size() << std::endl;
+    int i = 0;
     for (SOCKET clientSocket : clientSockets) {
+        i++;
+        std::cout << std::endl << i << std::endl;
         int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
         if (bytesSent == SOCKET_ERROR) {
             std::cerr << "Error sending data to client" << std::endl;
