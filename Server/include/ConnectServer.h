@@ -4,6 +4,7 @@
 #define NOMINMAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include "../thirdparties/jsoncpp/include/json/json.h"
 
 class GameManager;
 
@@ -27,11 +28,15 @@ public:
 	bool AssociateWithWindow();
 	void Cleanup(SOCKET socket);
 	void Update();
+	void UpdatePlayers();
 
 	void EventDispatcher(int fdEvent, SOCKET sock);
 	void HandleAccept(SOCKET sock);
 	void HandleRead(SOCKET sock);
 	void HandleClose(SOCKET sock);
+
+	void PickPlayer(Json::Value picked);
+	void UpdateMap(Json::Value play);
 
 	static LRESULT CALLBACK ServerWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

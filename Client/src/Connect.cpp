@@ -7,7 +7,7 @@
 #include "iostream"
 
 const char* DEFAULT_PORT = "21";
-const char* SERVER_IP_ADDR = "10.1.144.28";
+const char* SERVER_IP_ADDR = "10.1.144.29";
 #define DEFAULT_BUFLEN 512
 
 Connect::Connect(GameManager& gm) : gameManager(gm), ConnectSocket(INVALID_SOCKET) {
@@ -145,9 +145,55 @@ void Connect::HandleAccept(SOCKET sock) {
 
 }
 
+void Connect::PickPlayer(Json::Value picked)
+{
+    if (picked.isMember("Player1"))
+        if (picked["Player1"] == 1)
+            gameManager.m_player1 = 1;
+    if (picked.isMember("Player2"))
+        if (picked["Player2"] == 1)
+            gameManager.m_player2 = 1;
+
+}
+
+void Connect::UpdateMap(Json::Value play)
+{
+    if (play.isMember("FirstLine") || play.isMember("SecondLine") || play.isMember("ThirdLine")) {
+        std::string mapString;
+        if (play.isMember("FirstLine"))
+        {
+            mapString = play["FirstLine"].asString();
+            std::cout << mapString << std::endl;
+            for (int i = 0; i < 3; ++i) {
+                gameManager.m_map[0][i] = mapString[i];
+            }
+            gameManager.m_map[0][3] = '\0';
+        }
+        if (play.isMember("SecondLine"))
+        {
+            mapString = play["SecondLine"].asString();
+            std::cout << mapString << std::endl;
+            for (int i = 0; i < 3; ++i) {
+                gameManager.m_map[1][i] = mapString[i];
+            }
+            gameManager.m_map[1][3] = '\0';
+        }
+        if (play.isMember("ThirdLine"))
+        {
+            mapString = play["ThirdLine"].asString();
+            std::cout << mapString << std::endl;
+            for (int i = 0; i < 3; ++i) {
+                gameManager.m_map[2][i] = mapString[i];
+            }
+            gameManager.m_map[2][3] = '\0';
+        }
+    }
+}
+
 void Connect::HandleRead(SOCKET sock) {
     char recvbuf[DEFAULT_BUFLEN];
     int bytesRead = recv(sock, recvbuf, DEFAULT_BUFLEN, 0);
+    std::cout << "Received : " << recvbuf << std::endl;
     if (bytesRead > 0) {
         // Analyser la chaîne JSON reçue
         std::string jsonReceived(recvbuf, bytesRead);
@@ -159,59 +205,10 @@ void Connect::HandleRead(SOCKET sock) {
             return;
         }
 
-        // Mettre à jour m_map si les clés "FirstLine", "SecondLine" ou "ThirdLine" sont présentes dans le JSON
-        if (root.isMember("FirstLine") || root.isMember("SecondLine") || root.isMember("ThirdLine")) {
-            std::string mapString;
-            if (root.isMember("FirstLine"))
-            {
-                mapString = root["FirstLine"].asString();
-                std::cout << mapString << std::endl;
-                for (int i = 0; i < 3; ++i) {
-                    gameManager.m_map[0][i] = mapString[i];
-                }
-                gameManager.m_map[0][3] = '\0';
-            }
-            if (root.isMember("SecondLine"))
-            {
-                mapString = root["SecondLine"].asString();
-                std::cout << mapString << std::endl;
-                for (int i = 0; i < 3; ++i) {
-                    gameManager.m_map[1][i] = mapString[i];
-                }
-                gameManager.m_map[1][3] = '\0';
-            }
-            if (root.isMember("ThirdLine"))
-            {
-                mapString = root["ThirdLine"].asString();
-                std::cout << mapString << std::endl;
-                for (int i = 0; i < 3; ++i) {
-                    gameManager.m_map[2][i] = mapString[i];
-                }
-                gameManager.m_map[2][3] = '\0';
-            }
-        }
-        if (root.isMember("CurrentPlayer"))
-            gameManager.m_currentPlayer = root["CurrentPlayer"].asInt();
-        if (root.isMember("Player1") || root.isMember("Player2"))
-        {
-            if (root["Player1"] == 1)
-            {
-                gameManager.m_player1 = 1;
-            }
-            if (root["Player2"] == 1)
-            {
-                gameManager.m_player2 = 1;
-            }
-        }
-
-        // Afficher la carte mise à jour
-        std::cout << "Carte mise à jour : " << std::endl;
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 3; ++j) {
-                std::cout << gameManager.m_map[i][j] << " ";
-            }
-            std::cout << std::endl;
-        }
+        if (root.isMember("Key") && root["Key"] == "Picked")
+            PickPlayer(root);
+        if (root.isMember("Key") && root["Key"] == "Play")
+            UpdateMap(root);
     }
 }
 
@@ -245,6 +242,7 @@ int Connect::Send(const char* buff) {
         return 1;
     }
     printf("Bytes Sent: %d\n", iResult);
+    std::cout << "Sent : " << buff << std::endl;
     return 0;
 }
 

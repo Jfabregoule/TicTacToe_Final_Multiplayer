@@ -443,6 +443,7 @@ void GameManager::FormatAndSendMap() {
 	int			sendResult;
 
 	// Ajout des lignes de la carte au JSON
+	root["Key"] = "Play";
 	root["FirstLine"] = m_map[0];
 	root["SecondLine"] = m_map[1];
 	root["ThirdLine"] = m_map[2];
@@ -480,6 +481,7 @@ void GameManager::FormatAndSendPlayer() {
 
 
 	// Ajout du joueur courant au JSON
+	root["Key"] = "Picked";
 	if (m_player1 == 1)
 	{
 		root["Player1"] = 1;
@@ -505,6 +507,8 @@ void GameManager::FormatAndSendPlayer() {
 	strcpy_s(jsonString, jsonOutput.size() + 1, jsonOutput.c_str());
 
 	formatedJson = jsonString;
+
+	std::cout << "Sending :" << formatedJson << std::endl;
 
 	sendResult = m_connect->Send(formatedJson);
 
@@ -672,6 +676,7 @@ void GameManager::ChoosePlayer() {
 	if (position.y <= windowSize.y / 2) {
 		if (PlayerVerification(1))
 		{
+			std::cout << "Player 1 picked" << std::endl;
 			m_player1 = 1;
 			FormatAndSendPlayer();
 			m_menu = false;
@@ -682,6 +687,7 @@ void GameManager::ChoosePlayer() {
 	else if (position.y > windowSize.y / 2) {
 		if (PlayerVerification(2))
 		{
+			std::cout << "Player 2 picked" << std::endl;
 			m_player2 = 1;
 			FormatAndSendPlayer();
 			m_menu = false;

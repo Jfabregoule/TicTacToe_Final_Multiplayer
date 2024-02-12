@@ -2,6 +2,7 @@
 #define NOMINMAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include "../thirdparties/jsoncpp/include/json/json.h"
 
 class GameManager;
 
@@ -36,6 +37,9 @@ public:
     void HandleAccept(SOCKET sock);
     void HandleRead(SOCKET sock);
     void HandleClose(SOCKET sock);
+
+    void PickPlayer(Json::Value picked);
+    void UpdateMap(Json::Value play);
 
     static LRESULT CALLBACK ClientWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

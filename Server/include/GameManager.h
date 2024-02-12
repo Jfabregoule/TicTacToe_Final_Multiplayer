@@ -48,6 +48,8 @@ public:
 	char						m_map[3][4];
 	int							m_currentTurn;
 	int							m_currentPlayer;
+	int							m_player1;
+	int							m_player2;
 
 	// Constructor/Destructor
 
