@@ -26,6 +26,7 @@ public:
 	bool CreateHiddenWindow();
 	bool AssociateWithWindow();
 	void Cleanup(SOCKET socket);
+	void Update();
 
 	void EventDispatcher(int fdEvent, SOCKET sock);
 	void HandleAccept(SOCKET sock);

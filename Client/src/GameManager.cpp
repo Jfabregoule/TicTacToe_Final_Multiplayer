@@ -42,7 +42,7 @@ GameManager::GameManager() {
 
 	m_previousClickState = false;
 
-	m_connect = new Connect;
+	m_connect = new Connect(*this);
 
 	if (!font.loadFromFile("rsrc/font/Caveat-Regular.ttf")) {
 		std::cerr << "Erreur lors du chargement de la police" << std::endl;

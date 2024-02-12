@@ -140,6 +140,23 @@ bool ConnectServer::Initialize() {
     return true;
 }
 
+void ConnectServer::Update() {
+    Json::Value root;
+    root["FirstLine"] = gameManager.m_map[0];
+    root["SecondLine"] = gameManager.m_map[1];
+    root["ThirdLine"] = gameManager.m_map[2];
+    root["CurrentPlayer"] = gameManager.m_currentPlayer;
+    std::string jsonToSend = root.toStyledString();
+
+    for (SOCKET clientSocket : clientSockets) {
+        int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
+        if (bytesSent == SOCKET_ERROR) {
+            std::cerr << "Error sending data to client" << std::endl;
+            // Gérer l'erreur, par exemple, fermer la connexion avec le client défaillant
+        }
+    }
+}
+
 void ConnectServer::HandleAccept(SOCKET sock) {
     SOCKET incomingSocket;
     incomingSocket = accept(sock, NULL, NULL);
@@ -247,6 +264,11 @@ LRESULT CALLBACK ConnectServer::ServerWindowProc(HWND hwnd, UINT uMsg, WPARAM wP
         SOCKET sock = wParam; // Socket client qui fait la requête
 
         pServer->EventDispatcher(fdEvent, sock);
+        if (pServer->gameManager.m_currentPlayer == 1)
+            pServer->gameManager.m_currentPlayer = 2;
+        else
+            pServer->gameManager.m_currentPlayer = 1;
+        pServer->Update();
     }
     default:
         return DefWindowProc(hwnd, uMsg, wParam, lParam);

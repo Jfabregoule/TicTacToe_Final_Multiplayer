@@ -4,6 +4,7 @@ class GameWindow;
 class Connect;
 
 #include <SFML/Audio/Music.hpp>
+#include <SFML/Graphics.hpp>
 #include "../thirdparties/jsoncpp/include/json/json.h"
 
 class GameManager
@@ -20,9 +21,6 @@ private:
 
 	bool						m_running;
 
-	char						m_map[3][4];
-	int							m_currentTurn;
-	int							m_currentPlayer;
 	bool						m_previousClickState;
 
 	bool						m_menu;
@@ -59,6 +57,10 @@ private:
 	Connect*					m_connect;
 
 public:
+
+	char						m_map[3][4];
+	int							m_currentTurn;
+	int							m_currentPlayer;
 
 	// Constructor/Destructor
 

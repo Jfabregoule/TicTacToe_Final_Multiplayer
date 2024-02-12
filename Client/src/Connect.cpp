@@ -1,15 +1,16 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "../include/Connect.h"
+#include "../include/GameManager.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include "iostream"
 
 const char* DEFAULT_PORT = "21";
-const char* SERVER_IP_ADDR = "10.1.170.36";
+const char* SERVER_IP_ADDR = "10.1.170.22";
 #define DEFAULT_BUFLEN 512
 
-Connect::Connect() : ConnectSocket(INVALID_SOCKET) {
+Connect::Connect(GameManager& gm) : gameManager(gm), ConnectSocket(INVALID_SOCKET) {
     recvbuf[DEFAULT_BUFLEN];
     recvbuflen = DEFAULT_BUFLEN;
     initialize();
@@ -140,6 +141,90 @@ int Connect::initialize() {
     return 0;
 }
 
+void Connect::HandleAccept(SOCKET sock) {
+    
+}
+
+void Connect::HandleRead(SOCKET sock) {
+    char recvbuf[DEFAULT_BUFLEN];
+    int bytesRead = recv(sock, recvbuf, DEFAULT_BUFLEN, 0);
+    if (bytesRead > 0) {
+        // Analyser la chaîne JSON reçue
+        std::string jsonReceived(recvbuf, bytesRead);
+        Json::Value root;
+        Json::Reader reader;
+        bool parsingSuccessful = reader.parse(jsonReceived, root);
+        if (!parsingSuccessful) {
+            std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+            return;
+        }
+
+        // Mettre à jour m_map si les clés "FirstLine", "SecondLine" ou "ThirdLine" sont présentes dans le JSON
+        if (root.isMember("FirstLine") || root.isMember("SecondLine") || root.isMember("ThirdLine")) {
+            std::string mapString;
+            if (root.isMember("FirstLine"))
+            {
+                mapString = root["FirstLine"].asString();
+                std::cout << mapString << std::endl;
+                for (int i = 0; i < 3; ++i) {
+                    gameManager.m_map[0][i] = mapString[i];
+                }
+                gameManager.m_map[0][3] = '\0';
+            }
+            if (root.isMember("SecondLine"))
+            {
+                mapString = root["SecondLine"].asString();
+                std::cout << mapString << std::endl;
+                for (int i = 0; i < 3; ++i) {
+                    gameManager.m_map[1][i] = mapString[i];
+                }
+                gameManager.m_map[1][3] = '\0';
+            }
+            if (root.isMember("ThirdLine"))
+            {
+                mapString = root["ThirdLine"].asString();
+                std::cout << mapString << std::endl;
+                for (int i = 0; i < 3; ++i) {
+                    gameManager.m_map[2][i] = mapString[i];
+                }
+                gameManager.m_map[2][3] = '\0';
+            }
+        }
+        if (root.isMember("CurrentPlayer"))
+            gameManager.m_currentPlayer = root["CurrentPlayer"].asInt();
+
+        // Afficher la carte mise à jour
+        std::cout << "Carte mise à jour : " << std::endl;
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                std::cout << gameManager.m_map[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+}
+
+void Connect::HandleClose(SOCKET sock) {
+    closesocket(sock);
+}
+
+void Connect::EventDispatcher(int fdEvent, SOCKET sock) {
+    switch (fdEvent) {
+    case FD_ACCEPT:
+        HandleAccept(sock);
+        break;
+    case FD_READ:
+        HandleRead(sock);
+        break;
+    case FD_CLOSE:
+        HandleClose(sock);
+        break;
+    default:
+        std::cout << "Event not found: " << fdEvent << " !" << std::endl;
+        break;
+    }
+}
+
 int Connect::Send(const char* buff) {
     iResult = send(ConnectSocket, buff, strlen(buff), 0);
     if (iResult == SOCKET_ERROR) {
@@ -159,13 +244,9 @@ LRESULT CALLBACK Connect::ClientWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
     switch (uMsg) {
     case WM_USER + 1:
         if (WSAGETSELECTEVENT(lParam) == FD_READ) {
+            int fdEvent = WSAGETSELECTEVENT(lParam);
             SOCKET sock = wParam;
-            char buffer[DEFAULT_BUFLEN];
-            int bytesRead = recv(sock, buffer, DEFAULT_BUFLEN, 0);
-            if (bytesRead > 0) {
-                printf("Bytes received: %d\n", bytesRead);
-                printf("Data received: %s\n", buffer);
-            }
+            pClient->EventDispatcher(fdEvent, sock);
         }
         else if (WSAGETSELECTEVENT(lParam) == FD_CLOSE) {
             printf("Connection closed\n");
