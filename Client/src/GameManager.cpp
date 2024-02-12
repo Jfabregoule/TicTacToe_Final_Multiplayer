@@ -322,6 +322,10 @@ void GameManager::ChooseEnd() {
 	if (position.y <= windowSize.y / 2) {
 		m_menu = true;
 		m_endScreen = false;
+
+		m_playerNumberSelf = -1;
+		m_playerNumberEnemy = -1;
+		Menu();
 	}
 	else if (position.y > windowSize.y / 2) {
 		m_endScreen = false;
