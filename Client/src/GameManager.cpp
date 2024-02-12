@@ -20,9 +20,18 @@ GameManager::GameManager() {
 	m_endScreen = false;
 	m_menu = true;
 	m_running = true;
+	m_username = true;
+	m_choiceScreen = false;
 
 	m_currentTurn = 0;
 	m_currentPlayer = 1;
+
+	m_playerNumberSelf = -1;
+	m_playerNumberEnemy = -1;
+
+	m_playerSpectator = false;
+
+	username = "";
 
 	m_Clock = new sf::Clock();
 	m_deltaTime = 0.f;
@@ -34,6 +43,10 @@ GameManager::GameManager() {
 	m_previousClickState = false;
 
 	m_connect = new Connect;
+
+	if (!font.loadFromFile("rsrc/font/Caveat-Regular.ttf")) {
+		std::cerr << "Erreur lors du chargement de la police" << std::endl;
+	}
 }
 
 /*
@@ -133,7 +146,19 @@ void GameManager::DrawBoard() {
 	}
 }
 
+void GameManager::DrawWord() {
+	if (m_username) {
+		m_window->w_window->draw(m_textList[0]);
+		m_window->w_window->draw(m_textList[1]);
+	}
+	else if (m_menu) {
+		m_window->w_window->draw(m_textList[2]);
+		m_window->w_window->draw(m_textList[3]);
+	}
+}
+
 void GameManager::RefreshWindow() {
+	m_username = false;
 	m_window->RefreshScreen();
 	DrawTerrain();
 	DrawBoard();
@@ -163,6 +188,26 @@ void GameManager::GenerateSprites() {
 	m_sprites.push_back(circleSprite);
 }
 
+void GameManager::GenerateText() {
+	sf::Text textInstruction("Entrez votre nom d'utilisateur :", font, 30);
+	textInstruction.setPosition(50, 50);
+
+	sf::Text textUsername("", font, 30);
+	textUsername.setPosition(50, 80);
+
+	sf::Text score("", font, 20);
+	score.setPosition(10, 10);
+
+	sf::Text textScore("Score :", font, 20);
+	textScore.setPosition(10, 10);
+
+
+	m_textList.push_back(textInstruction);
+	m_textList.push_back(textUsername);
+	m_textList.push_back(score);
+	m_textList.push_back(textScore);
+}
+
 void GameManager::GenerateMap() {
 	int	j = 0;
 
@@ -181,6 +226,7 @@ void GameManager::Generate() {
 	if (m_sprites.empty())
 		GenerateSprites();
 	GenerateMap();
+	GenerateText();
 
 	//GenerateHud();
 }
@@ -213,7 +259,16 @@ void GameManager::ChooseMenu() {
 	sf::Vector2u	windowSize = m_window->w_window->getSize();
 
 	if (position.y <= windowSize.y / 2)
-		m_menu = false;
+	{
+		if (m_playerSpectator)
+		{
+			m_menu = false;
+			m_choiceScreen = false;
+		}
+		else {
+			ChoicePlayerScreen();
+		}
+	}
 	else if (position.y > windowSize.y / 2) {
 		m_menu = false;
 		m_running = false;
@@ -231,7 +286,7 @@ void GameManager::Menu() {
 	}
 	menuBackgroundSprite.setTexture(menuBackgroundTexture);
 	SetIcon();
-	PlayMusic("rsrc/music/menu.ogg");
+	//PlayMusic("rsrc/music/menu.ogg");
 
 	m_timeChange = 0.0f;
 	while (m_menu) {
@@ -285,7 +340,7 @@ void GameManager::Player1WinScreen() {
 		exit(1);
 	}
 	player1BackgroundSprite.setTexture(player1BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player1win.ogg");
+	//PlayMusic("rsrc/music/endscreens/player1win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -318,7 +373,7 @@ void GameManager::Player2WinScreen() {
 		exit(1);
 	}
 	player2BackgroundSprite.setTexture(player2BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player2win.ogg");
+	//PlayMusic("rsrc/music/endscreens/player2win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -348,7 +403,7 @@ void GameManager::TieScreen() {
 		exit(1);
 	}
 	tieBackgroundSprite.setTexture(tieBackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/tie.ogg");
+	//PlayMusic("rsrc/music/endscreens/tie.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -513,7 +568,10 @@ void GameManager::HandleEvents() {
 				CloseWindow();
 
 			if (currentClickState && !m_previousClickState && m_window->w_window->hasFocus())
-				Place();
+				if (m_currentPlayer == m_playerNumberSelf)
+				{
+					Place();
+				}
 
 			m_previousClickState = currentClickState;
 		}
@@ -537,8 +595,9 @@ void GameManager::Start() {
 	float	fps = 0;
 
 	Generate();
-	Menu();
-	PlayMusic("rsrc/music/theme.ogg");
+	//Menu();
+	//PlayMusic("rsrc/music/theme.ogg");
+	enterNameScreen();
 	InitConnexion();
 	while (m_running)
 	{
@@ -548,10 +607,144 @@ void GameManager::Start() {
 		LimitFps(fps);
 		if (m_menu) {
 			Generate();
-			Menu();
-			PlayMusic("rsrc/music/theme.ogg");
+			enterNameScreen();
+			//Menu();
+			//PlayMusic("rsrc/music/theme.ogg");
 		}
 	}
+}
+
+
+/*
+---------------------------------------------------------------------------------
+|						Here is the Multiplayers methods						|
+---------------------------------------------------------------------------------
+*/
+
+void GameManager::ChoosePlayer() {
+	sf::Vector2i	position = sf::Mouse::getPosition(*m_window->w_window);
+	sf::Vector2u	windowSize = m_window->w_window->getSize();
+
+	if (position.y <= windowSize.y / 2) {
+		if (PlayerVerification(1))
+		{
+			m_menu = false;
+			m_choiceScreen = false;
+		}
+	}
+	else if (position.y > windowSize.y / 2) {
+		if (PlayerVerification(2))
+		{
+			m_menu = false;
+			m_choiceScreen = false;
+		}
+	}
+}
+
+void GameManager::enterNameScreen() {
+	Event		event;
+	sf::Texture	menuBackgroundTexture;
+	sf::Sprite	menuBackgroundSprite;
+
+	if (!menuBackgroundTexture.loadFromFile("rsrc/img/menu/background.png")) {
+		std::cout << "Error loading menu background image" << std::endl;
+		exit(1);
+	}
+
+	menuBackgroundSprite.setTexture(menuBackgroundTexture);
+	while (m_username) {
+		while (m_window->w_window->pollEvent(event))
+		{
+			if (m_timeChange > INPUT_BLOCK_TIME)
+			{
+				if (event.type == Event::Closed)
+					CloseWindow();
+
+				if (event.type == sf::Event::TextEntered) {
+					if (event.text.unicode < 128) {
+						char enteredChar = static_cast<char>(event.text.unicode);
+						if (enteredChar == '\b' && !username.empty()) {
+							// Backspace : supprimer le dernier caractère
+							username.pop_back();
+						}
+						else if (enteredChar != '\b') {
+							// Ajouter le caractère à la chaîne du nom d'utilisateur
+							username += enteredChar;
+						}
+						// Mettre à jour le texte affiché
+						m_textList[1].setString(username);
+					}
+				}
+				if (event.key.code == sf::Keyboard::Enter) {
+					m_username = false;
+					m_menu = true;
+					Menu();
+				}
+			}
+		}
+		m_window->w_window->draw(menuBackgroundSprite);
+		DrawWord();
+		m_window->w_window->display();
+		LimitFps(60.0f);
+	}
+}
+
+void GameManager::ChoicePlayerScreen() {
+	Event		event;
+	sf::Texture	choiceBackgroundTexture;
+	sf::Sprite	choiceBackgroundSprite;
+
+	if (!choiceBackgroundTexture.loadFromFile("rsrc/img/playerChoice/choiceBackground.png")) {
+		std::cout << "Error loading choice player screen background image" << std::endl;
+		exit(1);
+	}
+	choiceBackgroundSprite.setTexture(choiceBackgroundTexture);
+	//PlayMusic("rsrc/music/endscreens/player1win.ogg");
+
+	m_choiceScreen = true;
+	m_timeChange = 0.0f;
+	//m_timeChange = 0.0f;
+	while (m_choiceScreen) {
+
+		while (m_window->w_window->pollEvent(event))
+		{
+			if (m_timeChange > INPUT_BLOCK_TIME)
+			{
+				if (event.type == Event::Closed)
+					CloseWindow();
+
+				if (Mouse::isButtonPressed(Mouse::Button::Left) && m_window->w_window->hasFocus())
+					ChoosePlayer();
+			}
+		}
+		m_window->w_window->draw(choiceBackgroundSprite);
+		m_window->w_window->display();
+		LimitFps(60.0f);
+	}
+}
+
+bool GameManager::PlayerVerification(int playerNumber) {
+	if (m_playerNumberEnemy == -1) {
+		m_playerNumberSelf = playerNumber;
+
+		if (playerNumber == 1) {
+			m_playerNumberEnemy = 2;
+		}
+		else {
+			m_playerNumberEnemy = 1;
+		}
+
+		return true;
+	}
+	else if (m_playerNumberEnemy == 1 && playerNumber == 2) {
+		m_playerNumberSelf = 2;
+		return true;
+	}
+	else if (m_playerNumberEnemy == 2 && playerNumber == 1) {
+		m_playerNumberSelf = 1;
+		return true;
+	}
+	return false;
 }
 
 /*

@@ -27,6 +27,19 @@ private:
 
 	bool						m_menu;
 	bool						m_endScreen;
+	bool						m_choiceScreen;
+	bool						m_username;
+
+	int							m_playerNumberSelf;
+	int							m_playerNumberEnemy;
+
+	bool						m_playerSpectator;
+
+	std::vector<sf::Text>		m_textList;
+
+	std::string					username;
+
+	sf::Font					font;
 
 	sf::Music* m_music;
 
@@ -65,12 +78,14 @@ private:
 	void		LimitFps(float fps);
 	void		DrawTerrain();
 	void		DrawBoard();
+	void		DrawWord();
 	void		Sleep();
 	void		RefreshWindow();
 
 	// Generation related
 
 	void		GenerateSprites();
+	void		GenerateText();
 	void		GenerateMap();
 	void		Generate();
 
@@ -100,4 +115,13 @@ private:
 	void		Place();
 	void		EndCheck();
 	void		HandleEvents();
+
+	// Multiplayer Methods
+	char* convertJsonToString(const Json::Value& json, std::string key);
+	Json::Value convertStringToJson(const std::string& jsonString);
+	void		convertJsonToMap(Json::Value& json);
+	void		ChoicePlayerScreen();
+	void		enterNameScreen();
+	void		ChoosePlayer();
+	bool		PlayerVerification(int playerNumber);
 };
