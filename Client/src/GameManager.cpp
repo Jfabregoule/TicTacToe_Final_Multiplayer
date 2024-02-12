@@ -9,8 +9,11 @@
 
 const float INPUT_BLOCK_TIME = 0.8f;
 
-GameManager::GameManager() {
+#define DEFAULT_BUFLEN 512
 
+
+GameManager::GameManager() {
+	std::cout << "CLIENT" << std::endl;
 	m_window = new GameWindow();
 	m_icon = new sf::Image();
 
@@ -371,9 +374,45 @@ void GameManager::TieScreen() {
 ---------------------------------------------------------------------------------
 */
 
+void GameManager::FormatAndSendMap() {
+	// Création d'un objet Json::Value
+	const char* formatedJson;
+	Json::Value root;
+	int			sendResult;
+
+	// Ajout des lignes de la carte au JSON
+	root["FirstLine"] = m_map[0];
+	root["SecondLine"] = m_map[1];
+	root["ThirdLine"] = m_map[2];
+
+	// Ajout du joueur courant au JSON
+	root["CurrentPlayer"] = m_currentPlayer;
+
+	// Création d'un objet Json::StyledWriter pour une sortie formatée
+	Json::StyledWriter writer;
+
+	// Convertir le Json::Value en chaîne JSON formatée
+	std::string jsonOutput = writer.write(root);
+
+	// Allouer de la mémoire pour la chaîne JSON en tant que const char*
+	char* jsonString = new char[jsonOutput.size() + 1];
+	strcpy_s(jsonString, jsonOutput.size() + 1, jsonOutput.c_str());
+
+	formatedJson = jsonString;
+
+	sendResult = m_connect->Send(formatedJson);
+
+	delete[] jsonString;
+
+	if (sendResult != 0) {
+		std::cerr << "Error sending JSON to client." << std::endl;
+		// Gérer l'erreur de manière appropriée dans votre application
+	}
+}
+
 void GameManager::Place() {
 	char			c;
-	char* toReplace = nullptr;
+	char*			toReplace = nullptr;
 	sf::Vector2i	position = sf::Mouse::getPosition(*m_window->w_window);
 	sf::Vector2u	windowSize = m_window->w_window->getSize();
 
@@ -404,6 +443,7 @@ void GameManager::Place() {
 			m_currentPlayer = 2;
 		else
 			m_currentPlayer = 1;
+		FormatAndSendMap();
 	}
 }
 

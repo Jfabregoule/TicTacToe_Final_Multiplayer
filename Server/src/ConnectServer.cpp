@@ -6,11 +6,13 @@
 #include <vector>
 
 #include "../include/ConnectServer.h"
+#include "../thirdparties/jsoncpp/include/json/json.h"
+#include "../include/GameManager.h"
 
 #define DEFAULT_PORT "21"
 #define DEFAULT_BUFLEN 512
 
-ConnectServer::ConnectServer() : serverSocket(INVALID_SOCKET), hWnd(NULL) {
+ConnectServer::ConnectServer(GameManager& gm) : gameManager(gm), serverSocket(INVALID_SOCKET), hWnd(NULL) {
     Initialize();
 }
 
@@ -154,11 +156,55 @@ void ConnectServer::HandleRead(SOCKET sock) {
     char recvbuf[DEFAULT_BUFLEN];
     int bytesRead = recv(sock, recvbuf, DEFAULT_BUFLEN, 0);
     if (bytesRead > 0) {
-        //printf("Bytes received: %d\n", bytesRead);
-        printf("%.*s\n", bytesRead, recvbuf);
+        // Analyser la chaîne JSON reçue
+        std::string jsonReceived(recvbuf, bytesRead);
+        Json::Value root;
+        Json::Reader reader;
+        bool parsingSuccessful = reader.parse(jsonReceived, root);
+        if (!parsingSuccessful) {
+            std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+            return;
+        }
 
-        // Echo back the received data
-        send(sock, recvbuf, bytesRead, 0);
+        if (root.isMember("FirstLine") || root.isMember("SecondLine") || root.isMember("ThirdLine")) {
+            std::string mapString;
+            if (root.isMember("FirstLine"))
+            {
+                mapString = root["FirstLine"].asString();
+                std::cout << mapString << std::endl;
+                for (int i = 0; i < 3; ++i) {
+                    gameManager.m_map[0][i] = mapString[i];
+                }
+                gameManager.m_map[0][3] = '\0';
+            }
+            if (root.isMember("SecondLine"))
+            {
+                mapString = root["SecondLine"].asString();
+                std::cout << mapString << std::endl;
+                for (int i = 0; i < 3; ++i) {
+                    gameManager.m_map[1][i] = mapString[i];
+                }
+                gameManager.m_map[1][3] = '\0';
+            }
+            if (root.isMember("ThirdLine"))
+            {
+                mapString = root["ThirdLine"].asString();
+                std::cout << mapString << std::endl;
+                for (int i = 0; i < 3; ++i) {
+                    gameManager.m_map[2][i] = mapString[i];
+                }
+                gameManager.m_map[2][3] = '\0';
+            }
+        }
+
+        // Afficher la carte mise à jour
+        std::cout << "Carte mise à jour : " << std::endl;
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                std::cout << gameManager.m_map[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
     }
 }
 

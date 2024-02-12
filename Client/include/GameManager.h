@@ -92,7 +92,8 @@ private:
 
 	// Connexion related
 
-	void InitConnexion();
+	void		InitConnexion();
+	void		FormatAndSendMap();
 
 	// Main methods
 

@@ -1,18 +1,22 @@
 #pragma once
+
+#include <vector>
+#define NOMINMAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <vector>
 
+class GameManager;
 
 class ConnectServer
 {
 private:
-	SOCKET serverSocket;
-	HWND hWnd;
-	std::vector<SOCKET> clientSockets;
+	GameManager&				gameManager;
+	SOCKET						serverSocket;
+	HWND						hWnd;
+	std::vector<SOCKET>			clientSockets;
 
 public:
-	ConnectServer();
+	ConnectServer(GameManager& gm);
 	~ConnectServer();
 
 	bool Initialize();

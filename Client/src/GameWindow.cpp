@@ -12,7 +12,7 @@ using namespace sf;
 GameWindow::GameWindow() {
 	w_width = 600.f;
 	w_height = 600.f;
-	w_name = "Tic Tac Toe";
+	w_name = "Tic Tac Toe CLIENT";
 
 	w_window = new sf::RenderWindow(sf::VideoMode((unsigned int)w_width, (unsigned int)w_height), w_name);
 	sf::View view(sf::Vector2f(300, 300), sf::Vector2f(600, 600));
