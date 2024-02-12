@@ -13,7 +13,7 @@ const float INPUT_BLOCK_TIME = 0.8f;
 
 
 GameManager::GameManager() {
-	std::cout << "CLIENT" << std::endl;
+	//std::cout << "CLIENT" << std::endl;
 	m_window = new GameWindow();
 	m_icon = new sf::Image();
 
@@ -61,7 +61,7 @@ GameManager::GameManager() {
 void GameManager::SetIcon() {
 	if (!m_icon->loadFromFile("rsrc/img/icon/icon.png"))
 	{
-		std::cout << "Error loading icon" << std::endl;
+		//std::cout << "Error loading icon" << std::endl;
 		exit(1);
 	}
 	m_window->w_window->setIcon(m_icon->getSize().x, m_icon->getSize().y, m_icon->getPixelsPtr());
@@ -178,7 +178,7 @@ void GameManager::GenerateSprites() {
 	sf::Texture* crossTexture = new sf::Texture();
 	sf::Texture* circleTexture = new sf::Texture();
 	if (!crossTexture->loadFromFile("rsrc/img/objects/cross.png") or !circleTexture->loadFromFile("rsrc/img/objects/circle.png")) {
-		std::cout << "Error loading object textures." << std::endl;
+		//std::cout << "Error loading object textures." << std::endl;
 		exit(1);
 	}
 
@@ -228,6 +228,9 @@ void GameManager::GenerateMap() {
 void GameManager::Generate() {
 	if (m_sprites.empty())
 		GenerateSprites();
+	m_player1 = 0;
+	m_player2 = 0;
+	m_currentPlayer = 1;
 	GenerateMap();
 	GenerateText();
 
@@ -243,7 +246,7 @@ void GameManager::Generate() {
 void	GameManager::PlayMusic(const char* path) {
 	m_music->stop();
 	if (!m_music->openFromFile(path)) {
-		std::cout << "Error loading " << path << std::endl;
+		//std::cout << "Error loading " << path << std::endl;
 		exit(1);
 	}
 	m_music->setVolume(10.0f);
@@ -267,8 +270,10 @@ void GameManager::ChooseMenu() {
 		{
 			m_menu = false;
 			m_choiceScreen = false;
+			m_playerSpectator = true;
 		}
 		else {
+			m_playerSpectator = false;
 			ChoicePlayerScreen();
 		}
 	}
@@ -284,7 +289,7 @@ void GameManager::Menu() {
 	sf::Sprite	menuBackgroundSprite;
 
 	if (!menuBackgroundTexture.loadFromFile("rsrc/img/menu/background.png")) {
-		std::cout << "Error loading menu background image" << std::endl;
+		//std::cout << "Error loading menu background image" << std::endl;
 		exit(1);
 	}
 	menuBackgroundSprite.setTexture(menuBackgroundTexture);
@@ -343,7 +348,7 @@ void GameManager::Player1WinScreen() {
 	sf::Sprite	player1BackgroundSprite;
 
 	if (!player1BackgroundTexture.loadFromFile("rsrc/img/end/player1background.png")) {
-		std::cout << "Error loading player 1 win screen background image" << std::endl;
+		//std::cout << "Error loading player 1 win screen background image" << std::endl;
 		exit(1);
 	}
 	player1BackgroundSprite.setTexture(player1BackgroundTexture);
@@ -376,7 +381,7 @@ void GameManager::Player2WinScreen() {
 	sf::Sprite	player2BackgroundSprite;
 
 	if (!player2BackgroundTexture.loadFromFile("rsrc/img/end/player2background.png")) {
-		std::cout << "Error loading player 2 win screen background image" << std::endl;
+		//std::cout << "Error loading player 2 win screen background image" << std::endl;
 		exit(1);
 	}
 	player2BackgroundSprite.setTexture(player2BackgroundTexture);
@@ -406,7 +411,7 @@ void GameManager::TieScreen() {
 	sf::Sprite	tieBackgroundSprite;
 
 	if (!tieBackgroundTexture.loadFromFile("rsrc/img/end/tiebackground.png")) {
-		std::cout << "Error loading tie screen background image" << std::endl;
+		//std::cout << "Error loading tie screen background image" << std::endl;
 		exit(1);
 	}
 	tieBackgroundSprite.setTexture(tieBackgroundTexture);
@@ -449,7 +454,7 @@ void GameManager::FormatAndSendMap() {
 	root["ThirdLine"] = m_map[2];
 
 	// Ajout du joueur courant au JSON
-	root["CurrentPlayer"] = m_currentPlayer;
+	root["CurrentPlayer"] = m_playerNumberSelf;
 
 	// Création d'un objet Json::StyledWriter pour une sortie formatée
 	Json::StyledWriter writer;
@@ -526,6 +531,9 @@ void GameManager::Place() {
 	sf::Vector2i	position = sf::Mouse::getPosition(*m_window->w_window);
 	sf::Vector2u	windowSize = m_window->w_window->getSize();
 
+	std::cout << "CURENT" << m_currentPlayer << std::endl;
+	std::cout << "MYSELF" << m_playerNumberSelf << std::endl;
+
 	int i = -1, j = -1;
 	if (m_currentPlayer == 1)
 		c = 'x';
@@ -549,10 +557,10 @@ void GameManager::Place() {
 		toReplace = &m_map[i][j];
 		*toReplace = c;
 
-		if (m_currentPlayer == 1)
-			m_currentPlayer = 2;
-		else
-			m_currentPlayer = 1;
+		//if (m_currentPlayer == 1)
+		//	m_currentPlayer = 2;
+		//else
+		//	m_currentPlayer = 1;
 		FormatAndSendMap();
 	}
 }
@@ -630,9 +638,10 @@ void GameManager::HandleEvents() {
 				CloseWindow();
 
 			if (currentClickState && !m_previousClickState && m_window->w_window->hasFocus())
-				if (m_currentPlayer == m_playerNumberSelf)
+				if (m_currentPlayer == m_playerNumberSelf and m_player1 == 1 and m_player2 == 1 and !m_playerSpectator)
 				{
 					Place();
+					currentClickState = false;
 				}
 
 			m_previousClickState = currentClickState;
@@ -687,7 +696,7 @@ void GameManager::ChoosePlayer() {
 	else if (position.y > windowSize.y / 2) {
 		if (PlayerVerification(2))
 		{
-			std::cout << "Player 2 picked" << std::endl;
+			//std::cout << "Player 2 picked" << std::endl;
 			m_player2 = 1;
 			FormatAndSendPlayer();
 			m_menu = false;
@@ -703,7 +712,7 @@ void GameManager::enterNameScreen() {
 	sf::Sprite	menuBackgroundSprite;
 
 	if (!menuBackgroundTexture.loadFromFile("rsrc/img/menu/PlayerName.png")) {
-		std::cout << "Error loading menu background image" << std::endl;
+		//std::cout << "Error loading menu background image" << std::endl;
 		exit(1);
 	}
 
@@ -751,7 +760,7 @@ void GameManager::ChoicePlayerScreen() {
 	sf::Sprite	choiceBackgroundSprite;
 
 	if (!choiceBackgroundTexture.loadFromFile("rsrc/img/playerChoice/choiceBackground.png")) {
-		std::cout << "Error loading choice player screen background image" << std::endl;
+		//std::cout << "Error loading choice player screen background image" << std::endl;
 		exit(1);
 	}
 	choiceBackgroundSprite.setTexture(choiceBackgroundTexture);

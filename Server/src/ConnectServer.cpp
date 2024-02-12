@@ -145,7 +145,7 @@ void ConnectServer::UpdatePlayers() {
     Json::Value root;
     root["Key"] = "Picked";
     root["Player1"] = gameManager.m_player1;
-    root["Player2"] = gameManager.m_player1;
+    root["Player2"] = gameManager.m_player2;
     std::string jsonToSend = root.toStyledString();
 
     for (SOCKET clientSocket : clientSockets) {
@@ -159,17 +159,16 @@ void ConnectServer::UpdatePlayers() {
 
 void ConnectServer::Update() {
     Json::Value root;
+    root["Key"] = "Play";
     root["FirstLine"] = gameManager.m_map[0];
     root["SecondLine"] = gameManager.m_map[1];
     root["ThirdLine"] = gameManager.m_map[2];
     root["CurrentPlayer"] = gameManager.m_currentPlayer;
+    std::cout << "Sending" << std::endl;
+    std::cout << root << std::endl;
     std::string jsonToSend = root.toStyledString();
 
-    std::cout << clientSockets.size() << std::endl;
-    int i = 0;
     for (SOCKET clientSocket : clientSockets) {
-        i++;
-        std::cout << std::endl << i << std::endl;
         int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
         if (bytesSent == SOCKET_ERROR) {
             std::cerr << "Error sending data to client" << std::endl;
@@ -198,7 +197,7 @@ void ConnectServer::PickPlayer(Json::Value picked)
     if (picked.isMember("Player2"))
         if (picked["Player2"] == 1)
             gameManager.m_player2 = 1;
-
+    UpdatePlayers();
 }
 
 void ConnectServer::UpdateMap(Json::Value play)
@@ -231,6 +230,13 @@ void ConnectServer::UpdateMap(Json::Value play)
                 gameManager.m_map[2][i] = mapString[i];
             }
             gameManager.m_map[2][3] = '\0';
+        }
+        if (play.isMember("CurrentPlayer"))
+        {
+            if (play["CurrentPlayer"].asInt() == 1)
+                gameManager.m_currentPlayer = 2;
+            else if (play["CurrentPlayer"].asInt() == 2)
+                gameManager.m_currentPlayer = 1;
         }
     }
     Update();

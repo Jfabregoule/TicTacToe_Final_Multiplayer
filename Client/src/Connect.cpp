@@ -153,7 +153,6 @@ void Connect::PickPlayer(Json::Value picked)
     if (picked.isMember("Player2"))
         if (picked["Player2"] == 1)
             gameManager.m_player2 = 1;
-
 }
 
 void Connect::UpdateMap(Json::Value play)
@@ -163,7 +162,7 @@ void Connect::UpdateMap(Json::Value play)
         if (play.isMember("FirstLine"))
         {
             mapString = play["FirstLine"].asString();
-            std::cout << mapString << std::endl;
+            //std::cout << mapString << std::endl;
             for (int i = 0; i < 3; ++i) {
                 gameManager.m_map[0][i] = mapString[i];
             }
@@ -172,7 +171,7 @@ void Connect::UpdateMap(Json::Value play)
         if (play.isMember("SecondLine"))
         {
             mapString = play["SecondLine"].asString();
-            std::cout << mapString << std::endl;
+            //std::cout << mapString << std::endl;
             for (int i = 0; i < 3; ++i) {
                 gameManager.m_map[1][i] = mapString[i];
             }
@@ -181,11 +180,15 @@ void Connect::UpdateMap(Json::Value play)
         if (play.isMember("ThirdLine"))
         {
             mapString = play["ThirdLine"].asString();
-            std::cout << mapString << std::endl;
+            //std::cout << mapString << std::endl;
             for (int i = 0; i < 3; ++i) {
                 gameManager.m_map[2][i] = mapString[i];
             }
             gameManager.m_map[2][3] = '\0';
+        }
+        if (play.isMember("CurrentPlayer"))
+        {
+            gameManager.m_currentPlayer = play["CurrentPlayer"].asInt();
         }
     }
 }
@@ -193,7 +196,7 @@ void Connect::UpdateMap(Json::Value play)
 void Connect::HandleRead(SOCKET sock) {
     char recvbuf[DEFAULT_BUFLEN];
     int bytesRead = recv(sock, recvbuf, DEFAULT_BUFLEN, 0);
-    std::cout << "Received : " << recvbuf << std::endl;
+    //std::cout << "Received : " << recvbuf << std::endl;
     if (bytesRead > 0) {
         // Analyser la chaîne JSON reçue
         std::string jsonReceived(recvbuf, bytesRead);
@@ -201,7 +204,7 @@ void Connect::HandleRead(SOCKET sock) {
         Json::Reader reader;
         bool parsingSuccessful = reader.parse(jsonReceived, root);
         if (!parsingSuccessful) {
-            std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+           // std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
             return;
         }
 
@@ -228,7 +231,7 @@ void Connect::EventDispatcher(int fdEvent, SOCKET sock) {
         HandleClose(sock);
         break;
     default:
-        std::cout << "Event not found: " << fdEvent << " !" << std::endl;
+        //std::cout << "Event not found: " << fdEvent << " !" << std::endl;
         break;
     }
 }
@@ -242,7 +245,7 @@ int Connect::Send(const char* buff) {
         return 1;
     }
     printf("Bytes Sent: %d\n", iResult);
-    std::cout << "Sent : " << buff << std::endl;
+    //std::cout << "Sent : " << buff << std::endl;
     return 0;
 }
 

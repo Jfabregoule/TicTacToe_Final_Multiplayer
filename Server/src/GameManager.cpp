@@ -174,6 +174,8 @@ void GameManager::GenerateMap() {
 }
 
 void GameManager::Generate() {
+	m_player1 = 0;
+	m_player2 = 0;
 	if (m_sprites.empty())
 		GenerateSprites();
 	GenerateMap();
