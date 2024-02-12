@@ -685,9 +685,13 @@ void GameManager::ChoosePlayer() {
 	if (position.y <= windowSize.y / 2) {
 		if (PlayerVerification(1))
 		{
-			std::cout << "Player 1 picked" << std::endl;
 			m_player1 = 1;
 			FormatAndSendPlayer();
+			m_menu = false;
+			m_choiceScreen = false;
+			Generate();
+		}else if (m_player1 == 1 and m_player2 == 1) {
+			m_playerSpectator = true;
 			m_menu = false;
 			m_choiceScreen = false;
 			Generate();
@@ -699,6 +703,11 @@ void GameManager::ChoosePlayer() {
 			//std::cout << "Player 2 picked" << std::endl;
 			m_player2 = 1;
 			FormatAndSendPlayer();
+			m_menu = false;
+			m_choiceScreen = false;
+			Generate();
+		}else if (m_player1 == 1 and m_player2 == 1) {
+			m_playerSpectator = true;
 			m_menu = false;
 			m_choiceScreen = false;
 			Generate();
