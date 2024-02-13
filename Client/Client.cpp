@@ -2,14 +2,16 @@
 #include <SFML/System/Sleep.hpp>
 #include <SFML/Audio.hpp>
 
-#include "include/Thread.h"
+#include "include/Threads.h"
+#include "include/Connect.h"
 #include "include/GameManager.h"
 
 int main()
 {
+    
     GameManager        gameThread;
 
     gameThread.start();
-    while (true);
+    Sleep(100000);
     return 0;
 }

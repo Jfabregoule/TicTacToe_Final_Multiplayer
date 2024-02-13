@@ -3,10 +3,11 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "../thirdparties/jsoncpp/include/json/json.h"
+#include "../include/Threads.h"
 
 class GameManager;
 
-class Connect
+class Connect : public Threads
 {
 private:
     WSADATA wsaData;
@@ -41,6 +42,11 @@ public:
     void UpdateScore(Json::Value score);
     void PickPlayer(Json::Value picked);
     void UpdateMap(Json::Value play);
+
+
+    virtual void EnterThreadFunction();
+    virtual void ExecuteThreadFunction();
+    virtual void ExitThreadFunction();
 
     static LRESULT CALLBACK ClientWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

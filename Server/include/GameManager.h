@@ -7,6 +7,7 @@ class ConnectServer;
 #include <SFML/Graphics.hpp>
 #include "../thirdparties/jsoncpp/include/json/json.h"
 
+
 class GameManager
 {
 

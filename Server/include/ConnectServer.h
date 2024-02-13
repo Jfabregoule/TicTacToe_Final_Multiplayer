@@ -6,6 +6,7 @@
 #include <ws2tcpip.h>
 #include "../thirdparties/jsoncpp/include/json/json.h"
 
+
 class GameManager;
 
 class ConnectServer

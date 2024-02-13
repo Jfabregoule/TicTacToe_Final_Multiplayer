@@ -4,11 +4,11 @@
 #include <windows.h>
 #include <iostream>
 
-class Thread 
+class Threads
 {
 public:
-	 
-	Thread();
+
+	Threads();
 
 	static DWORD WINAPI threadFunctionStatic(LPVOID lpParam);
 
@@ -24,3 +24,4 @@ protected:
 
 	HANDLE threadHandle_;
 };
+

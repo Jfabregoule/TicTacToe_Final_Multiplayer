@@ -13,7 +13,7 @@ const char* SERVER_IP_ADDR = "192.168.1.10";
 Connect::Connect(GameManager& gm) : gameManager(gm), ConnectSocket(INVALID_SOCKET) {
     recvbuf[DEFAULT_BUFLEN];
     recvbuflen = DEFAULT_BUFLEN;
-    initialize();
+
 }
 
 Connect::~Connect() {
@@ -289,4 +289,41 @@ LRESULT CALLBACK Connect::ClientWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
         break;
     }
     return 0;
+}
+
+void Connect::EnterThreadFunction() {
+    initialize();
+}
+
+
+void Connect::ExecuteThreadFunction() {
+    while (true) {
+        std::cout << "papagnan" << std::endl;
+        char recvbuf[DEFAULT_BUFLEN];
+        int bytesRead = recv(ConnectSocket, recvbuf, DEFAULT_BUFLEN, 0);
+        if (bytesRead > 0) {
+            std::string jsonReceived(recvbuf, bytesRead);
+            Json::Value root;
+            Json::Reader reader;
+            bool parsingSuccessful = reader.parse(jsonReceived, root);
+            if (!parsingSuccessful) {
+                // std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+                return;
+            }
+
+            if (root.isMember("Key") && root["Key"] == "Picked")
+                PickPlayer(root);
+            if (root.isMember("Key") && root["Key"] == "Play")
+                UpdateMap(root);
+            if (root.isMember("Key") && root["Key"] == "Score")
+                UpdateScore(root);
+        }
+        Sleep(1000);
+    }
+}
+
+
+void Connect::ExitThreadFunction() {
+    CleanupSocket(ConnectSocket);
+    CleanupWinsock();
 }

@@ -145,6 +145,7 @@
     <ClCompile Include="src\ConnectServer.cpp" />
     <ClCompile Include="src\GameManager.cpp" />
     <ClCompile Include="src\GameWindow.cpp" />
+    <ClCompile Include="src\Threads.cpp" />
     <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_reader.cpp" />
     <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_value.cpp" />
     <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_writer.cpp" />
@@ -153,6 +154,7 @@
     <ClInclude Include="include\ConnectServer.h" />
     <ClInclude Include="include\GameManager.h" />
     <ClInclude Include="include\GameWindow.h" />
+    <ClInclude Include="include\Threads.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

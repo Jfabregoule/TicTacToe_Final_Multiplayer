@@ -730,22 +730,11 @@ void GameManager::Start() {
 }
 
 void GameManager::EnterThreadFunction() {
-	Generate();
-	enterNameScreen();
-	if (m_running) {
-		ExecuteThreadFunction();
-	}
+	Start();
 }
 
 void GameManager::ExecuteThreadFunction() {
-	while (m_running) {
-		RefreshWindow();
-		HandleEvents();
-		EndCheck();
-		if (m_menu) {
-			EnterThreadFunction();
-		}
-	}
+	
 }
 
 void GameManager::ExitThreadFunction() {
