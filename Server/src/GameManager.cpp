@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <SocketLib.h>
 
 #include "../include/GameManager.h"
 #include "../include/GameWindow.h"
@@ -7,6 +8,29 @@
 #include "../include/ConnectServer.h"
 
 const float INPUT_BLOCK_TIME = 0.8f;
+
+// EVENT LISTENER
+
+ClientEventListener::ClientEventListener(GameManager* gameManager) :
+	_gameManager(gameManager)
+{}
+
+ClientEventListener::~ClientEventListener()
+{}
+
+void ClientEventListener::HandleAccept(SOCKET sender) {
+	std::cout << "ACCEPTING : )" << std::endl;
+}
+
+void ClientEventListener::HandleRead(SOCKET sender) {
+	std::cout << "READING : )" << std::endl;
+}
+
+void ClientEventListener::HandleClose(SOCKET sender) {
+	std::cout << "CLOSING : )" << std::endl;
+}
+
+// GAME MANAGER
 
 GameManager::GameManager() {
 
@@ -29,7 +53,8 @@ GameManager::GameManager() {
 
 	m_previousClickState = false;
 
-	m_connectServer = new ConnectServer(*this);
+	m_eventListener = new ClientEventListener(this);
+	m_socket = new SocketLibrary::ServerSocket("21", m_eventListener);
 }
 
 /*
@@ -368,6 +393,28 @@ void GameManager::TieScreen() {
 
 /*
 ---------------------------------------------------------------------------------
+|						Here are all the socket methods							|
+---------------------------------------------------------------------------------
+*/
+
+void GameManager::UpdateAllClients()
+{
+	Json::Value root;
+	root["Key"] = "Picked";
+	root["Player1"] = m_player1;
+	root["Player2"] = m_player2;
+	std::string jsonToSend = root.toStyledString();
+	for (SOCKET clientSocket : m_socket->Clients) {
+		int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
+		if (bytesSent == SOCKET_ERROR) {
+			std::cerr << "Error sending data to client" << std::endl;
+			// Gérer l'erreur, par exemple, fermer la connexion avec le client défaillant
+		}
+	}
+}
+
+/*
+---------------------------------------------------------------------------------
 |						Here are all the main methods							|
 ---------------------------------------------------------------------------------
 */
@@ -413,12 +460,12 @@ void GameManager::EndCheck() {
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
 			Generate();
-			m_connectServer->Update();
+			UpdateAllClients();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
 			Generate();
-			m_connectServer->Update();
+			UpdateAllClients();
 			return;
 		}
 	}
@@ -427,12 +474,12 @@ void GameManager::EndCheck() {
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
 			Generate();
-			m_connectServer->Update();
+			UpdateAllClients();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
 			Generate();
-			m_connectServer->Update();
+			UpdateAllClients();
 			return;
 		}
 	}
@@ -441,13 +488,13 @@ void GameManager::EndCheck() {
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
 		Generate();
-		m_connectServer->Update();
+		UpdateAllClients();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
 		Generate();
-		m_connectServer->Update();
+		UpdateAllClients();
 		return;
 	}
 
@@ -464,7 +511,7 @@ void GameManager::EndCheck() {
 
 	if (isTie) {
 		Generate();
-		m_connectServer->Update();
+		UpdateAllClients();
 	}
 }
 
@@ -490,7 +537,7 @@ void GameManager::HandleEvents() {
 
 void GameManager::Start() {
 	float	fps = 0;
-
+	m_socket->Initialize();
 	Generate();
 	//Menu();
 	m_menu = false;
