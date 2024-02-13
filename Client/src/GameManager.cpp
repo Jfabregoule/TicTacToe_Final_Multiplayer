@@ -198,17 +198,17 @@ void GameManager::GenerateText() {
 	sf::Text textUsername("", font, 30);
 	textUsername.setPosition(100, 250);
 
-	sf::Text score("", font, 20);
-	score.setPosition(10, 10);
-
-	sf::Text textScore("Score :", font, 20);
-	textScore.setPosition(10, 10);
-
 
 	m_textList.push_back(textInstruction);
 	m_textList.push_back(textUsername);
-	m_textList.push_back(score);
-	m_textList.push_back(textScore);
+}
+
+void GameManager::GenerateScoreText() {
+	sf::Text scoreText(username + "'s Scores :" + std::to_string(m_score), font, 30);
+	scoreText.setPosition(75, 50);
+
+
+	m_scoreText = scoreText;
 }
 
 void GameManager::GenerateMap() {
@@ -228,8 +228,6 @@ void GameManager::GenerateMap() {
 void GameManager::Generate() {
 	if (m_sprites.empty())
 		GenerateSprites();
-	m_player1 = 0;
-	m_player2 = 0;
 	m_currentPlayer = 1;
 	GenerateMap();
 	GenerateText();
@@ -309,7 +307,9 @@ void GameManager::Menu() {
 					ChooseMenu();
 			}
 		}
-		m_window->w_window->draw(menuBackgroundSprite);
+		m_window->w_window->draw(menuBackgroundSprite); 
+		GenerateScoreText();
+		m_window->w_window->draw(m_scoreText);
 		m_window->w_window->display();
 		LimitFps(60.0f);
 	}
@@ -478,6 +478,41 @@ void GameManager::FormatAndSendMap() {
 	}
 }
 
+void GameManager::FormatAndSendInit() {
+	// Création d'un objet Json::Value
+	const char* formatedJson;
+	Json::Value root;
+	int			sendResult;
+
+
+	// Ajout du joueur courant au JSON
+	root["Key"] = "Init";
+	root["Username"] = username;
+
+	// Création d'un objet Json::StyledWriter pour une sortie formatée
+	Json::StyledWriter writer;
+
+	// Convertir le Json::Value en chaîne JSON formatée
+	std::string jsonOutput = writer.write(root);
+
+	// Allouer de la mémoire pour la chaîne JSON en tant que const char*
+	char* jsonString = new char[jsonOutput.size() + 1];
+	strcpy_s(jsonString, jsonOutput.size() + 1, jsonOutput.c_str());
+
+	formatedJson = jsonString;
+
+	std::cout << "Sending :" << formatedJson << std::endl;
+
+	sendResult = m_connect->Send(formatedJson);
+
+	delete[] jsonString;
+
+	if (sendResult != 0) {
+		std::cerr << "Error sending JSON to client." << std::endl;
+		// Gérer l'erreur de manière appropriée dans votre application
+	}
+}
+
 void GameManager::FormatAndSendPlayer() {
 	// Création d'un objet Json::Value
 	const char* formatedJson;
@@ -487,6 +522,8 @@ void GameManager::FormatAndSendPlayer() {
 
 	// Ajout du joueur courant au JSON
 	root["Key"] = "Picked";
+	root["Username"] = m_username;
+	root["PlayerNumber"] = m_playerNumberSelf;
 	if (m_player1 == 1)
 	{
 		root["Player1"] = 1;
@@ -569,11 +606,15 @@ void GameManager::EndCheck() {
 	// Check rows
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
+			m_player1 = 0;
+			m_player2 = 0;
 			Generate();
 			Player1WinScreen();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
+			m_player1 = 0;
+			m_player2 = 0;
 			Generate();
 			Player2WinScreen();
 			return;
@@ -583,11 +624,15 @@ void GameManager::EndCheck() {
 	// Check columns
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
+			m_player1 = 0;
+			m_player2 = 0;
 			Generate();
 			Player1WinScreen();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
+			m_player1 = 0;
+			m_player2 = 0;
 			Generate();
 			Player2WinScreen();
 			return;
@@ -597,12 +642,16 @@ void GameManager::EndCheck() {
 	// Check diagonals
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
+		m_player1 = 0;
+		m_player2 = 0;
 		Generate();
 		Player1WinScreen();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
+		m_player1 = 0;
+		m_player2 = 0;
 		Generate();
 		Player2WinScreen();
 		return;
@@ -620,6 +669,8 @@ void GameManager::EndCheck() {
 	}
 
 	if (isTie) {
+		m_player1 = 0;
+		m_player2 = 0;
 		Generate();
 		TieScreen();
 	}
@@ -750,6 +801,7 @@ void GameManager::enterNameScreen() {
 					}
 				}
 				if (event.key.code == sf::Keyboard::Enter) {
+					FormatAndSendInit();
 					m_username = false;
 					m_menu = true;
 					Menu();

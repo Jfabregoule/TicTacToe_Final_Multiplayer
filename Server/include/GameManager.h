@@ -50,6 +50,10 @@ public:
 	int							m_currentPlayer;
 	int							m_player1;
 	int							m_player2;
+	std::string					m_player1Username;
+	std::string					m_player2Username;
+
+	std::map<std::string, int> m_players;
 
 	// Constructor/Destructor
 

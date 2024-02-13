@@ -7,7 +7,7 @@
 #include "iostream"
 
 const char* DEFAULT_PORT = "21";
-const char* SERVER_IP_ADDR = "10.1.144.29";
+const char* SERVER_IP_ADDR = "10.1.144.28";
 #define DEFAULT_BUFLEN 512
 
 Connect::Connect(GameManager& gm) : gameManager(gm), ConnectSocket(INVALID_SOCKET) {
@@ -155,6 +155,18 @@ void Connect::PickPlayer(Json::Value picked)
             gameManager.m_player2 = 1;
 }
 
+void Connect::UpdateScore(Json::Value score)
+{
+    if (gameManager.m_playerNumberSelf == 1)
+    {
+        gameManager.m_score = score["Player1Score"].asInt();
+    }
+    else if (gameManager.m_playerNumberSelf == 2)
+    {
+        gameManager.m_score = score["Player2Score"].asInt();
+    }
+}
+
 void Connect::UpdateMap(Json::Value play)
 {
     if (play.isMember("FirstLine") || play.isMember("SecondLine") || play.isMember("ThirdLine")) {
@@ -191,6 +203,10 @@ void Connect::UpdateMap(Json::Value play)
             gameManager.m_currentPlayer = play["CurrentPlayer"].asInt();
         }
     }
+    if (play.isMember("FirstLine") || play.isMember("SecondLine"))
+    {
+
+    }
 }
 
 void Connect::HandleRead(SOCKET sock) {
@@ -212,6 +228,8 @@ void Connect::HandleRead(SOCKET sock) {
             PickPlayer(root);
         if (root.isMember("Key") && root["Key"] == "Play")
             UpdateMap(root);
+        if (root.isMember("Key") && root["Key"] == "Score")
+            UpdateScore(root);
     }
 }
 

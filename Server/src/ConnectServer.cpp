@@ -146,6 +146,47 @@ void ConnectServer::UpdatePlayers() {
     root["Key"] = "Picked";
     root["Player1"] = gameManager.m_player1;
     root["Player2"] = gameManager.m_player2;
+
+    if (root["PlayerNumber"] == 1)
+    {
+        gameManager.m_player1Username = root["Username"].asString();
+    }
+    else if (root["PlayerNumber"] == 2)
+    {
+        gameManager.m_player2Username = root["Username"].asString();
+    }
+
+    std::string jsonToSend = root.toStyledString();
+
+    for (SOCKET clientSocket : clientSockets) {
+        int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
+        if (bytesSent == SOCKET_ERROR) {
+            std::cerr << "Error sending data to client" << std::endl;
+            // Gérer l'erreur, par exemple, fermer la connexion avec le client défaillant
+        }
+    }
+}
+
+void ConnectServer::UpdateScore(int winner) {
+    Json::Value root;
+
+    if (winner == 1)
+    {
+        gameManager.m_players[gameManager.m_player1Username] += 1;
+    }
+    else if (winner == 2)
+    {
+        gameManager.m_players[gameManager.m_player2Username] += 1;
+    }
+
+
+    std::cout << "score1: " << gameManager.m_players[gameManager.m_player1Username] << std::endl;
+    std::cout << "score2: " << gameManager.m_players[gameManager.m_player2Username] << std::endl;
+
+    root["Player1Score"] = gameManager.m_players[gameManager.m_player1Username];
+    root["Player2Score"] = gameManager.m_players[gameManager.m_player2Username];
+    root["Key"] = "Score";
+
     std::string jsonToSend = root.toStyledString();
 
     for (SOCKET clientSocket : clientSockets) {
@@ -159,6 +200,7 @@ void ConnectServer::UpdatePlayers() {
 
 void ConnectServer::Update() {
     Json::Value root;
+
     root["Key"] = "Play";
     root["FirstLine"] = gameManager.m_map[0];
     root["SecondLine"] = gameManager.m_map[1];
@@ -242,6 +284,15 @@ void ConnectServer::UpdateMap(Json::Value play)
     Update();
 }
 
+void ConnectServer::InitPlayer(Json::Value init) {
+    if (init.isMember("Username")) {
+        if (gameManager.m_players.find("Username") == gameManager.m_players.end()) {
+
+            gameManager.m_players[init["Username"].asString()] = 0;
+        }
+    }
+}
+
 void ConnectServer::HandleRead(SOCKET sock) {
     char recvbuf[DEFAULT_BUFLEN];
     int bytesRead = recv(sock, recvbuf, DEFAULT_BUFLEN, 0);
@@ -257,10 +308,13 @@ void ConnectServer::HandleRead(SOCKET sock) {
             return;
         }
 
+        std::cout << root << std::endl;
         if (root.isMember("Key") && root["Key"] == "Picked")
             PickPlayer(root);
         if (root.isMember("Key") && root["Key"] == "Play")
             UpdateMap(root);
+        if (root.isMember("Key") && root["Key"] == "Init")
+            InitPlayer(root);
     }
 }
 

@@ -38,6 +38,7 @@ public:
     void HandleRead(SOCKET sock);
     void HandleClose(SOCKET sock);
 
+    void UpdateScore(Json::Value score);
     void PickPlayer(Json::Value picked);
     void UpdateMap(Json::Value play);
 

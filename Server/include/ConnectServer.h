@@ -29,6 +29,7 @@ public:
 	void Cleanup(SOCKET socket);
 	void Update();
 	void UpdatePlayers();
+	void UpdateScore(int winner);
 
 	void EventDispatcher(int fdEvent, SOCKET sock);
 	void HandleAccept(SOCKET sock);
@@ -37,6 +38,7 @@ public:
 
 	void PickPlayer(Json::Value picked);
 	void UpdateMap(Json::Value play);
+	void InitPlayer(Json::Value init);
 
 	static LRESULT CALLBACK ServerWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

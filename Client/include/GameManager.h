@@ -28,12 +28,13 @@ private:
 	bool						m_choiceScreen;
 	bool						m_username;
 
-	int							m_playerNumberSelf;
 	int							m_playerNumberEnemy;
 
 	bool						m_playerSpectator;
 
 	std::vector<sf::Text>		m_textList;
+
+	sf::Text					m_scoreText;
 
 	std::string					username;
 
@@ -58,9 +59,11 @@ private:
 
 public:
 
+	int							m_playerNumberSelf;
 	char						m_map[3][4];
 	int							m_currentTurn;
 	int							m_currentPlayer;
+	int							m_score;
 
 	int							m_player1;
 	int							m_player2;
@@ -91,6 +94,7 @@ private:
 
 	void		GenerateSprites();
 	void		GenerateText();
+	void		GenerateScoreText();
 	void		GenerateMap();
 	void		Generate();
 
@@ -114,6 +118,7 @@ private:
 
 	void		FormatAndSendMap();
 	void		FormatAndSendPlayer();
+	void		FormatAndSendInit();
 
 	// Main methods
 
