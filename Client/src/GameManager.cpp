@@ -550,7 +550,7 @@ void GameManager::FormatAndSendPlayer() {
 
 	formatedJson = jsonString;
 
-	std::cout << "Sending :" << formatedJson << std::endl;
+	//std::cout << "Sending :" << formatedJson << std::endl;
 
 	sendResult = m_connect->Send(formatedJson);
 

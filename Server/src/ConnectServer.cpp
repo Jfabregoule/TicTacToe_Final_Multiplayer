@@ -171,10 +171,6 @@ void ConnectServer::SendScore(int winner) {
     Json::Value root;
 
 
-    std::cout << "username1: " << gameManager.m_player1Username << std::endl;
-    std::cout << "username2: " << gameManager.m_player2Username << std::endl;
-    std::cout << "score1: " << gameManager.m_players[gameManager.m_player1Username] << std::endl;
-    std::cout << "score2: " << gameManager.m_players[gameManager.m_player2Username] << std::endl;
 
     if (winner == 1)
     {
@@ -184,10 +180,6 @@ void ConnectServer::SendScore(int winner) {
     {
         gameManager.m_players[gameManager.m_player2Username] += 1;
     }
-
-
-    std::cout << "score1: " << gameManager.m_players[gameManager.m_player1Username] << std::endl;
-    std::cout << "score2: " << gameManager.m_players[gameManager.m_player2Username] << std::endl;
 
     root["Player1Score"] = gameManager.m_players[gameManager.m_player1Username];
     root["Player2Score"] = gameManager.m_players[gameManager.m_player2Username];

@@ -157,15 +157,12 @@ void Connect::PickPlayer(Json::Value picked)
 
 void Connect::UpdateScore(Json::Value score)
 {
-    std::cout << "Pourquoi cette pute est appeller ?   " << score << std::endl;
     if (gameManager.m_playerNumberSelf == 1)
     {
-        std::cout << "Player 1 win:" << std::endl;
         gameManager.m_score = score["Player1Score"].asInt();
     }
     else if (gameManager.m_playerNumberSelf == 2)
     {
-        std::cout << "Player 2 win:" << std::endl;
         gameManager.m_score = score["Player2Score"].asInt();
     }
 }
@@ -231,9 +228,11 @@ void Connect::HandleRead(SOCKET sock) {
             PickPlayer(root);
         if (root.isMember("Key") && root["Key"] == "Play")
             UpdateMap(root);
-        if (root.isMember("Key") && root["Key"] == "Score")
-            std::cout << "gcvuzg cuzabv divzjrcjaz rjc:" << std::endl;
+        if (root.isMember("Key") && root["Key"] == "Score") {
             UpdateScore(root);
+        }
+
+
     }
 }
 
