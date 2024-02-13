@@ -146,6 +146,8 @@ void ConnectServer::UpdatePlayers() {
     root["Key"] = "Picked";
     root["Player1"] = gameManager.m_player1;
     root["Player2"] = gameManager.m_player2;
+    std::cout << "username:" << gameManager.m_player1Username;
+    std::cout << "username:" << gameManager.m_players[gameManager.m_player1Username];
 
     if (root["PlayerNumber"] == 1)
     {
@@ -169,6 +171,12 @@ void ConnectServer::UpdatePlayers() {
 
 void ConnectServer::UpdateScore(int winner) {
     Json::Value root;
+
+
+    std::cout << "username1: " << gameManager.m_player1Username << std::endl;
+    std::cout << "username2: " << gameManager.m_player2Username << std::endl;
+    std::cout << "score1: " << gameManager.m_players[gameManager.m_player1Username] << std::endl;
+    std::cout << "score2: " << gameManager.m_players[gameManager.m_player2Username] << std::endl;
 
     if (winner == 1)
     {
@@ -239,6 +247,14 @@ void ConnectServer::PickPlayer(Json::Value picked)
     if (picked.isMember("Player2"))
         if (picked["Player2"] == 1)
             gameManager.m_player2 = 1;
+    if (picked.isMember("PlayerNumber"))
+    {
+        if (picked["PlayerNumber"] == 1) {
+            gameManager.m_player1Username = picked["Username"].asString();
+        }else if (picked["PlayerNumber"] == 2) {
+            gameManager.m_player2Username = picked["Username"].asString();
+        }
+    }
     UpdatePlayers();
 }
 
@@ -286,8 +302,7 @@ void ConnectServer::UpdateMap(Json::Value play)
 
 void ConnectServer::InitPlayer(Json::Value init) {
     if (init.isMember("Username")) {
-        if (gameManager.m_players.find("Username") == gameManager.m_players.end()) {
-
+        if (gameManager.m_players.find(init["Username"].asString()) == gameManager.m_players.end()) {
             gameManager.m_players[init["Username"].asString()] = 0;
         }
     }

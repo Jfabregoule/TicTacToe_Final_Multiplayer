@@ -522,7 +522,7 @@ void GameManager::FormatAndSendPlayer() {
 
 	// Ajout du joueur courant au JSON
 	root["Key"] = "Picked";
-	root["Username"] = m_username;
+	root["Username"] = username;
 	root["PlayerNumber"] = m_playerNumberSelf;
 	if (m_player1 == 1)
 	{
