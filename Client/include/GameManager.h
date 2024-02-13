@@ -5,8 +5,8 @@ class Connect;
 
 #include <SFML/Audio/Music.hpp>
 #include <SFML/Graphics.hpp>
-#include "../Thread.h"
 #include "../thirdparties/jsoncpp/include/json/json.h"
+#include "Thread.h"
 
 class GameManager : public Thread
 {

@@ -1,4 +1,4 @@
-#include "Thread.h"
+#include "../include/Thread.h"
 
 Thread::Thread() : threadHandle_(NULL) {}
 

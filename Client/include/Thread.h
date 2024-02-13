@@ -7,7 +7,7 @@
 class Thread 
 {
 public:
-
+	 
 	Thread();
 
 	static DWORD WINAPI threadFunctionStatic(LPVOID lpParam);

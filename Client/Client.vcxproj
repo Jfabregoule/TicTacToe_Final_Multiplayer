@@ -144,6 +144,7 @@
     <ClInclude Include="include\Connect.h" />
     <ClInclude Include="include\GameManager.h" />
     <ClInclude Include="include\GameWindow.h" />
+    <ClInclude Include="include\Thread.h" />
     <ClInclude Include="Thread.h" />
   </ItemGroup>
   <ItemGroup>
@@ -151,6 +152,7 @@
     <ClCompile Include="src\Connect.cpp" />
     <ClCompile Include="src\GameManager.cpp" />
     <ClCompile Include="src\GameWindow.cpp" />
+    <ClCompile Include="src\Thread.cpp" />
     <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_reader.cpp" />
     <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_value.cpp" />
     <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_writer.cpp" />

@@ -611,7 +611,7 @@ void GameManager::EndCheck() {
 			m_player2 = 0;
 			Generate();
 			Player1WinScreen();
-			this->join();
+			this->ExitThreadFunction();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
@@ -619,7 +619,7 @@ void GameManager::EndCheck() {
 			m_player2 = 0;
 			Generate();
 			Player2WinScreen();
-			this->join();
+			this->ExitThreadFunction();
 			return;
 		}
 	}
@@ -631,7 +631,7 @@ void GameManager::EndCheck() {
 			m_player2 = 0;
 			Generate();
 			Player1WinScreen();
-			this->join();
+			this->ExitThreadFunction();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
@@ -639,7 +639,7 @@ void GameManager::EndCheck() {
 			m_player2 = 0;
 			Generate();
 			Player2WinScreen();
-			this->join();
+			this->ExitThreadFunction();
 			return;
 		}
 	}
@@ -651,7 +651,7 @@ void GameManager::EndCheck() {
 		m_player2 = 0;
 		Generate();
 		Player1WinScreen();
-		this->join();
+		this->ExitThreadFunction();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
@@ -660,7 +660,7 @@ void GameManager::EndCheck() {
 		m_player2 = 0;
 		Generate();
 		Player2WinScreen();
-		this->join();
+		this->ExitThreadFunction();
 		return;
 	}
 
@@ -738,11 +738,18 @@ void GameManager::EnterThreadFunction() {
 }
 
 void GameManager::ExecuteThreadFunction() {
-	std::cout << "Execute" << std::endl;
+	while (m_running) {
+		RefreshWindow();
+		HandleEvents();
+		EndCheck();
+		if (m_menu) {
+			EnterThreadFunction();
+		}
+	}
 }
 
 void GameManager::ExitThreadFunction() {
-	std::cout << "Exit" << std::endl;
+	this->join();
 }
 
 
