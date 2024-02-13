@@ -29,7 +29,7 @@ public:
 	void Cleanup(SOCKET socket);
 	void Update();
 	void UpdatePlayers();
-	void UpdateScore(int winner);
+	void SendScore(int winner);
 
 	void EventDispatcher(int fdEvent, SOCKET sock);
 	void HandleAccept(SOCKET sock);

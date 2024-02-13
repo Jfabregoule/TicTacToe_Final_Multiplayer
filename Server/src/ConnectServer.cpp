@@ -146,8 +146,6 @@ void ConnectServer::UpdatePlayers() {
     root["Key"] = "Picked";
     root["Player1"] = gameManager.m_player1;
     root["Player2"] = gameManager.m_player2;
-    std::cout << "username:" << gameManager.m_player1Username;
-    std::cout << "username:" << gameManager.m_players[gameManager.m_player1Username];
 
     if (root["PlayerNumber"] == 1)
     {
@@ -169,7 +167,7 @@ void ConnectServer::UpdatePlayers() {
     }
 }
 
-void ConnectServer::UpdateScore(int winner) {
+void ConnectServer::SendScore(int winner) {
     Json::Value root;
 
 
@@ -214,8 +212,8 @@ void ConnectServer::Update() {
     root["SecondLine"] = gameManager.m_map[1];
     root["ThirdLine"] = gameManager.m_map[2];
     root["CurrentPlayer"] = gameManager.m_currentPlayer;
-    std::cout << "Sending" << std::endl;
-    std::cout << root << std::endl;
+    //std::cout << "Sending" << std::endl;
+    //std::cout << root << std::endl;
     std::string jsonToSend = root.toStyledString();
 
     for (SOCKET clientSocket : clientSockets) {
@@ -265,7 +263,7 @@ void ConnectServer::UpdateMap(Json::Value play)
         if (play.isMember("FirstLine"))
         {
             mapString = play["FirstLine"].asString();
-            std::cout << mapString << std::endl;
+            //std::cout << mapString << std::endl;
             for (int i = 0; i < 3; ++i) {
                 gameManager.m_map[0][i] = mapString[i];
             }
@@ -274,7 +272,7 @@ void ConnectServer::UpdateMap(Json::Value play)
         if (play.isMember("SecondLine"))
         {
             mapString = play["SecondLine"].asString();
-            std::cout << mapString << std::endl;
+            //std::cout << mapString << std::endl;
             for (int i = 0; i < 3; ++i) {
                 gameManager.m_map[1][i] = mapString[i];
             }
@@ -283,7 +281,7 @@ void ConnectServer::UpdateMap(Json::Value play)
         if (play.isMember("ThirdLine"))
         {
             mapString = play["ThirdLine"].asString();
-            std::cout << mapString << std::endl;
+            //std::cout << mapString << std::endl;
             for (int i = 0; i < 3; ++i) {
                 gameManager.m_map[2][i] = mapString[i];
             }
@@ -311,7 +309,7 @@ void ConnectServer::InitPlayer(Json::Value init) {
 void ConnectServer::HandleRead(SOCKET sock) {
     char recvbuf[DEFAULT_BUFLEN];
     int bytesRead = recv(sock, recvbuf, DEFAULT_BUFLEN, 0);
-    std::cout << "Received : " << recvbuf << std::endl;
+    //std::cout << "Received : " << recvbuf << std::endl;
     if (bytesRead > 0) {
         // Analyser la chaîne JSON reçue
         std::string jsonReceived(recvbuf, bytesRead);
@@ -323,7 +321,7 @@ void ConnectServer::HandleRead(SOCKET sock) {
             return;
         }
 
-        std::cout << root << std::endl;
+        //std::cout << root << std::endl;
         if (root.isMember("Key") && root["Key"] == "Picked")
             PickPlayer(root);
         if (root.isMember("Key") && root["Key"] == "Play")

@@ -229,7 +229,7 @@ void GameManager::Menu() {
 	}
 	menuBackgroundSprite.setTexture(menuBackgroundTexture);
 	SetIcon();
-	PlayMusic("rsrc/music/menu.ogg");
+	//Playmusic("rsrc/music/menu.ogg");
 
 	m_timeChange = 0.0f;
 	while (m_menu) {
@@ -283,7 +283,7 @@ void GameManager::Player1WinScreen() {
 		exit(1);
 	}
 	player1BackgroundSprite.setTexture(player1BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player1win.ogg");
+	//Playmusic("rsrc/music/endscreens/player1win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -316,7 +316,7 @@ void GameManager::Player2WinScreen() {
 		exit(1);
 	}
 	player2BackgroundSprite.setTexture(player2BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player2win.ogg");
+	//Playmusic("rsrc/music/endscreens/player2win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -346,7 +346,7 @@ void GameManager::TieScreen() {
 		exit(1);
 	}
 	tieBackgroundSprite.setTexture(tieBackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/tie.ogg");
+	//Playmusic("rsrc/music/endscreens/tie.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -413,13 +413,15 @@ void GameManager::EndCheck() {
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
 			Generate();
-			m_connectServer->UpdateScore(1);
+			std::cout << "ceavrzvs:" << std::endl;
+			//m_connectServer->SendScore(1);
 			m_connectServer->Update();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
 			Generate();
-			m_connectServer->UpdateScore(2);
+			std::cout << "ceavrzvs:" << std::endl;
+			//m_connectServer->SendScore(2);
 			m_connectServer->Update();
 			return;
 		}
@@ -429,13 +431,15 @@ void GameManager::EndCheck() {
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
 			Generate();
-			m_connectServer->UpdateScore(1);
+			std::cout << "ceavrzvs:" << std::endl;
+			//m_connectServer->SendScore(1);
 			m_connectServer->Update();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
 			Generate();
-			m_connectServer->UpdateScore(2);
+			std::cout << "ceavrzvs:" << std::endl;
+			//m_connectServer->SendScore(2);
 			m_connectServer->Update();
 			return;
 		}
@@ -445,14 +449,16 @@ void GameManager::EndCheck() {
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
 		Generate();
-		m_connectServer->UpdateScore(1);
+		std::cout << "ceavrzvs:" << std::endl;
+		//m_connectServer->SendScore(1);
 		m_connectServer->Update();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
 		Generate();
-		m_connectServer->UpdateScore(2);
+		std::cout << "ceavrzvs:" << std::endl;
+		//m_connectServer->SendScore(2);
 		m_connectServer->Update();
 		return;
 	}
@@ -470,7 +476,8 @@ void GameManager::EndCheck() {
 
 	if (isTie) {
 		Generate();
-		m_connectServer->UpdateScore(0);
+		std::cout << "ceavrzvs:" << std::endl;
+		//m_connectServer->SendScore(0);
 		m_connectServer->Update();
 	}
 }
@@ -501,7 +508,7 @@ void GameManager::Start() {
 	Generate();
 	//Menu();
 	m_menu = false;
-	PlayMusic("rsrc/music/theme.ogg");
+	//Playmusic("rsrc/music/theme.ogg");
 	while (m_running)
 	{
 		RefreshWindow();
@@ -511,7 +518,7 @@ void GameManager::Start() {
 		if (m_menu) {
 			Generate();
 			Menu();
-			PlayMusic("rsrc/music/theme.ogg");
+			//Playmusic("rsrc/music/theme.ogg");
 		}
 	}
 }

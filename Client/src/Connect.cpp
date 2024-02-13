@@ -7,7 +7,7 @@
 #include "iostream"
 
 const char* DEFAULT_PORT = "21";
-const char* SERVER_IP_ADDR = "10.1.144.28";
+const char* SERVER_IP_ADDR = "10.1.170.36";
 #define DEFAULT_BUFLEN 512
 
 Connect::Connect(GameManager& gm) : gameManager(gm), ConnectSocket(INVALID_SOCKET) {
@@ -157,12 +157,15 @@ void Connect::PickPlayer(Json::Value picked)
 
 void Connect::UpdateScore(Json::Value score)
 {
+    std::cout << "Pourquoi cette pute est appeller ?   " << score << std::endl;
     if (gameManager.m_playerNumberSelf == 1)
     {
+        std::cout << "Player 1 win:" << std::endl;
         gameManager.m_score = score["Player1Score"].asInt();
     }
     else if (gameManager.m_playerNumberSelf == 2)
     {
+        std::cout << "Player 2 win:" << std::endl;
         gameManager.m_score = score["Player2Score"].asInt();
     }
 }
@@ -229,6 +232,7 @@ void Connect::HandleRead(SOCKET sock) {
         if (root.isMember("Key") && root["Key"] == "Play")
             UpdateMap(root);
         if (root.isMember("Key") && root["Key"] == "Score")
+            std::cout << "gcvuzg cuzabv divzjrcjaz rjc:" << std::endl;
             UpdateScore(root);
     }
 }

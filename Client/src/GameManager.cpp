@@ -307,7 +307,7 @@ void GameManager::Menu() {
 					ChooseMenu();
 			}
 		}
-		m_window->w_window->draw(menuBackgroundSprite); 
+		m_window->w_window->draw(menuBackgroundSprite);
 		GenerateScoreText();
 		m_window->w_window->draw(m_scoreText);
 		m_window->w_window->display();
@@ -501,7 +501,7 @@ void GameManager::FormatAndSendInit() {
 
 	formatedJson = jsonString;
 
-	std::cout << "Sending :" << formatedJson << std::endl;
+	//std::cout << "Sending :" << formatedJson << std::endl;
 
 	sendResult = m_connect->Send(formatedJson);
 
@@ -567,9 +567,6 @@ void GameManager::Place() {
 	char* toReplace = nullptr;
 	sf::Vector2i	position = sf::Mouse::getPosition(*m_window->w_window);
 	sf::Vector2u	windowSize = m_window->w_window->getSize();
-
-	std::cout << "CURENT" << m_currentPlayer << std::endl;
-	std::cout << "MYSELF" << m_playerNumberSelf << std::endl;
 
 	int i = -1, j = -1;
 	if (m_currentPlayer == 1)
