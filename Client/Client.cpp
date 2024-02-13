@@ -10,8 +10,8 @@ int main()
 {
     
     GameManager        gameThread;
-
-    gameThread.start();
-    Sleep(100000);
+    Connect            gameConnect(gameThread);
+    gameConnect.start();
+    gameThread.Start();
     return 0;
 }

@@ -77,9 +77,6 @@ public:
 	// Called in main
 
 	void		Start();
-	virtual void EnterThreadFunction();
-	virtual void ExecuteThreadFunction();
-	virtual void ExitThreadFunction();
 
 private:
 

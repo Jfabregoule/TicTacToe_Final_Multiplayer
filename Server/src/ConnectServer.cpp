@@ -13,8 +13,6 @@
 #define DEFAULT_BUFLEN 512
 
 ConnectServer::ConnectServer(GameManager& gm) : gameManager(gm), serverSocket(INVALID_SOCKET), hWnd(NULL) {
-    clientSockets.clear();
-    Initialize();
 }
 
 ConnectServer::~ConnectServer() {
@@ -322,14 +320,6 @@ void ConnectServer::HandleRead(SOCKET sock) {
             std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
             return;
         }
-
-        std::cout << root << std::endl;
-        if (root.isMember("Key") && root["Key"] == "Picked")
-            PickPlayer(root);
-        if (root.isMember("Key") && root["Key"] == "Play")
-            UpdateMap(root);
-        if (root.isMember("Key") && root["Key"] == "Init")
-            InitPlayer(root);
     }
 }
 
@@ -382,4 +372,43 @@ LRESULT CALLBACK ConnectServer::ServerWindowProc(HWND hwnd, UINT uMsg, WPARAM wP
         break;
     }
     return 0;
+}
+
+void ConnectServer::EnterThreadFunction() {
+    clientSockets.clear();
+    Initialize();
+}
+
+
+void ConnectServer::ExecuteThreadFunction() {
+    while (true) {
+        char recvbuf[DEFAULT_BUFLEN];
+        int bytesRead = recv(serverSocket, recvbuf, DEFAULT_BUFLEN, 0);
+        std::cout << "Received : " << recvbuf << std::endl;
+        if (bytesRead > 0) {
+            // Analyser la chaîne JSON reçue
+            std::string jsonReceived(recvbuf, bytesRead);
+            Json::Value root;
+            Json::Reader reader;
+            bool parsingSuccessful = reader.parse(jsonReceived, root);
+            if (!parsingSuccessful) {
+                std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+                return;
+            }
+
+            std::cout << root << std::endl;
+            if (root.isMember("Key") && root["Key"] == "Picked")
+                PickPlayer(root);
+            if (root.isMember("Key") && root["Key"] == "Play")
+                UpdateMap(root);
+            if (root.isMember("Key") && root["Key"] == "Init")
+                InitPlayer(root);
+            Sleep(1000);
+        }   
+    }
+}
+
+
+void ConnectServer::ExitThreadFunction() {
+    Cleanup();
 }

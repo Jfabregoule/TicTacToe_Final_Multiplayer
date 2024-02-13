@@ -5,11 +5,12 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "../thirdparties/jsoncpp/include/json/json.h"
+#include "Threads.h"
 
 
 class GameManager;
 
-class ConnectServer
+class ConnectServer : public Threads
 {
 private:
 	GameManager&				gameManager;
@@ -40,6 +41,10 @@ public:
 	void PickPlayer(Json::Value picked);
 	void UpdateMap(Json::Value play);
 	void InitPlayer(Json::Value init);
+
+	virtual void EnterThreadFunction();
+	virtual void ExecuteThreadFunction();
+	virtual void ExitThreadFunction();
 
 	static LRESULT CALLBACK ServerWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

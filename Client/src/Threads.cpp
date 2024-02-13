@@ -26,6 +26,8 @@ void Threads::join() {
 DWORD WINAPI Threads::threadFunctionStatic(LPVOID lpParam) {
     Threads* myThread = static_cast<Threads*>(lpParam);
     myThread->EnterThreadFunction();
+    myThread->ExecuteThreadFunction();
+    myThread->ExitThreadFunction();
     return 0;
 }
 

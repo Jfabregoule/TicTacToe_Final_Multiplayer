@@ -223,13 +223,6 @@ void Connect::HandleRead(SOCKET sock) {
            // std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
             return;
         }
-
-        if (root.isMember("Key") && root["Key"] == "Picked")
-            PickPlayer(root);
-        if (root.isMember("Key") && root["Key"] == "Play")
-            UpdateMap(root);
-        if (root.isMember("Key") && root["Key"] == "Score")
-            UpdateScore(root);
     }
 }
 
@@ -292,16 +285,18 @@ LRESULT CALLBACK Connect::ClientWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 }
 
 void Connect::EnterThreadFunction() {
+    std::cout << "grosse bite de cum" << std::endl;
     initialize();
 }
 
 
 void Connect::ExecuteThreadFunction() {
+    std::cout << "grosse bite de Sperme" << std::endl;
     while (true) {
-        std::cout << "papagnan" << std::endl;
         char recvbuf[DEFAULT_BUFLEN];
         int bytesRead = recv(ConnectSocket, recvbuf, DEFAULT_BUFLEN, 0);
         if (bytesRead > 0) {
+            // Analyser la chaîne JSON reçue
             std::string jsonReceived(recvbuf, bytesRead);
             Json::Value root;
             Json::Reader reader;
@@ -310,15 +305,14 @@ void Connect::ExecuteThreadFunction() {
                 // std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
                 return;
             }
-
             if (root.isMember("Key") && root["Key"] == "Picked")
                 PickPlayer(root);
             if (root.isMember("Key") && root["Key"] == "Play")
                 UpdateMap(root);
             if (root.isMember("Key") && root["Key"] == "Score")
                 UpdateScore(root);
+            Sleep(1000);
         }
-        Sleep(1000);
     }
 }
 
