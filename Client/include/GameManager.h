@@ -5,9 +5,10 @@ class Connect;
 
 #include <SFML/Audio/Music.hpp>
 #include <SFML/Graphics.hpp>
+#include "../Thread.h"
 #include "../thirdparties/jsoncpp/include/json/json.h"
 
-class GameManager
+class GameManager : public Thread
 {
 
 private:
@@ -76,6 +77,9 @@ public:
 	// Called in main
 
 	void		Start();
+	virtual void EnterThreadFunction();
+	virtual void ExecuteThreadFunction();
+	virtual void ExitThreadFunction();
 
 private:
 

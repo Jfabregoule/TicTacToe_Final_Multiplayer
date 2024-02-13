@@ -229,7 +229,7 @@ void GameManager::Menu() {
 	}
 	menuBackgroundSprite.setTexture(menuBackgroundTexture);
 	SetIcon();
-	PlayMusic("rsrc/music/menu.ogg");
+	//PlayMusic("rsrc/music/menu.ogg");
 
 	m_timeChange = 0.0f;
 	while (m_menu) {
@@ -283,7 +283,7 @@ void GameManager::Player1WinScreen() {
 		exit(1);
 	}
 	player1BackgroundSprite.setTexture(player1BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player1win.ogg");
+	//PlayMusic("rsrc/music/endscreens/player1win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -316,7 +316,7 @@ void GameManager::Player2WinScreen() {
 		exit(1);
 	}
 	player2BackgroundSprite.setTexture(player2BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player2win.ogg");
+	//PlayMusic("rsrc/music/endscreens/player2win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -346,7 +346,7 @@ void GameManager::TieScreen() {
 		exit(1);
 	}
 	tieBackgroundSprite.setTexture(tieBackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/tie.ogg");
+	//PlayMusic("rsrc/music/endscreens/tie.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -501,7 +501,7 @@ void GameManager::Start() {
 	Generate();
 	//Menu();
 	m_menu = false;
-	PlayMusic("rsrc/music/theme.ogg");
+	//PlayMusic("rsrc/music/theme.ogg");
 	while (m_running)
 	{
 		RefreshWindow();
@@ -511,7 +511,7 @@ void GameManager::Start() {
 		if (m_menu) {
 			Generate();
 			Menu();
-			PlayMusic("rsrc/music/theme.ogg");
+			//PlayMusic("rsrc/music/theme.ogg");
 		}
 	}
 }

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <chrono>
 #include <SFML/Graphics.hpp>
 
 #include "../include/GameManager.h"
@@ -610,6 +611,7 @@ void GameManager::EndCheck() {
 			m_player2 = 0;
 			Generate();
 			Player1WinScreen();
+			this->join();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
@@ -617,6 +619,7 @@ void GameManager::EndCheck() {
 			m_player2 = 0;
 			Generate();
 			Player2WinScreen();
+			this->join();
 			return;
 		}
 	}
@@ -628,6 +631,7 @@ void GameManager::EndCheck() {
 			m_player2 = 0;
 			Generate();
 			Player1WinScreen();
+			this->join();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
@@ -635,6 +639,7 @@ void GameManager::EndCheck() {
 			m_player2 = 0;
 			Generate();
 			Player2WinScreen();
+			this->join();
 			return;
 		}
 	}
@@ -646,6 +651,7 @@ void GameManager::EndCheck() {
 		m_player2 = 0;
 		Generate();
 		Player1WinScreen();
+		this->join();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
@@ -654,6 +660,7 @@ void GameManager::EndCheck() {
 		m_player2 = 0;
 		Generate();
 		Player2WinScreen();
+		this->join();
 		return;
 	}
 
@@ -720,6 +727,22 @@ void GameManager::Start() {
 			//PlayMusic("rsrc/music/theme.ogg");
 		}
 	}
+}
+
+void GameManager::EnterThreadFunction() {
+	Generate();
+	enterNameScreen();
+	if (m_running) {
+		ExecuteThreadFunction();
+	}
+}
+
+void GameManager::ExecuteThreadFunction() {
+	std::cout << "Execute" << std::endl;
+}
+
+void GameManager::ExitThreadFunction() {
+	std::cout << "Exit" << std::endl;
 }
 
 
