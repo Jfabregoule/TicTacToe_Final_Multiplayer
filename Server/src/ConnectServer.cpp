@@ -71,7 +71,7 @@ bool ConnectServer::CreateClientSocket() {
 
 bool ConnectServer::StartListening() {
     if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
-        printf("listen failed: %d\n", WSAGetLastError());   
+        printf("listen failed: %d\n", WSAGetLastError());
         Cleanup(serverSocket);
         return false;
     }
@@ -196,6 +196,65 @@ void ConnectServer::SendScore(int winner) {
     }
 }
 
+bool ConnectServer::SendUpdateToServer() {
+    SOCKET wsocket;
+    WSADATA wsaData;
+    struct sockaddr_in server;
+    int server_len;
+    std::string mapString;
+
+    for (int i = 0; i < 3; ++i) {
+        mapString += gameManager.m_map[i];
+        if (i < 2) {
+            mapString += '\n';
+        }
+    }
+
+    // Initialize Winsock
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        std::cerr << "WSAStartup failed\n";
+        return false;
+    }
+
+    // Create a socket
+    wsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (wsocket == INVALID_SOCKET) {
+        std::cerr << "socket creation failed\n";
+        WSACleanup();
+        return false;
+    }
+
+    // Define server address and port
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = inet_addr("10.1.170.36"); // Adresse IP du serveur
+    server.sin_port = htons(7896); // Port du serveur
+    server_len = sizeof(server);
+
+    // Connect to server
+    if (connect(wsocket, (SOCKADDR*)&server, server_len) == SOCKET_ERROR) {
+        std::cerr << "connect failed\n";
+        closesocket(wsocket);
+        WSACleanup();
+        return false;
+    }
+
+    // Send update to server
+
+    int bytesSent = send(wsocket, mapString.c_str(), mapString.size(), 0);
+    if (bytesSent == SOCKET_ERROR) {
+        std::cerr << "send failed\n";
+        closesocket(wsocket);
+        WSACleanup();
+        return false;
+    }
+
+    // Close socket and clean up Winsock
+    closesocket(wsocket);
+    WSACleanup();
+
+    return true;
+}
+
 void ConnectServer::Update() {
     Json::Value root;
 
@@ -207,6 +266,10 @@ void ConnectServer::Update() {
     //std::cout << "Sending" << std::endl;
     //std::cout << root << std::endl;
     std::string jsonToSend = root.toStyledString();
+
+    if (!SendUpdateToServer()) {
+        std::cerr << "Erreur lors de l'envoi de la mise à jour au serveur web\n";
+    }
 
     for (SOCKET clientSocket : clientSockets) {
         int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
@@ -241,7 +304,8 @@ void ConnectServer::PickPlayer(Json::Value picked)
     {
         if (picked["PlayerNumber"] == 1) {
             gameManager.m_player1Username = picked["Username"].asString();
-        }else if (picked["PlayerNumber"] == 2) {
+        }
+        else if (picked["PlayerNumber"] == 2) {
             gameManager.m_player2Username = picked["Username"].asString();
         }
     }
