@@ -225,9 +225,19 @@ void Connect::HandleRead(SOCKET sock) {
         Json::Reader reader;
         bool parsingSuccessful = reader.parse(jsonReceived, root);
         if (!parsingSuccessful) {
-           // std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+            // std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
             return;
         }
+
+        if (root.isMember("Key") && root["Key"] == "Picked")
+            PickPlayer(root);
+        if (root.isMember("Key") && root["Key"] == "Play")
+            UpdateMap(root);
+        if (root.isMember("Key") && root["Key"] == "Score") {
+            UpdateScore(root);
+        }
+
+
     }
 }
 
@@ -294,33 +304,17 @@ void Connect::EnterThreadFunction() {
 }
 
 void Connect::ExecuteThreadFunction() {
-    while (true) {
-        EnterCriticalSection(&m_critical);
-        char recvbuf[DEFAULT_BUFLEN];
-        int bytesRead = recv(ConnectSocket, recvbuf, DEFAULT_BUFLEN, 0);
-        if (bytesRead > 0) {
-            std::cout << bytesRead << std::endl;
-            return;
-
-            // Analyser la chaîne JSON reçue
-            std::string jsonReceived(recvbuf, bytesRead);
-            Json::Value root;
-            Json::Reader reader;
-            bool parsingSuccessful = reader.parse(jsonReceived, root);
-            if (!parsingSuccessful) {
-                // std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
-                return;
-            }
-            if (root.isMember("Key") && root["Key"] == "Picked")
-                PickPlayer(root);
-            if (root.isMember("Key") && root["Key"] == "Play")
-                UpdateMap(root);
-            if (root.isMember("Key") && root["Key"] == "Score")
-                UpdateScore(root);
-            Sleep(1000);
-            
+    while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
+    {
+        if (bRet == -1)
+        {
+            // handle the error and possibly exit
         }
-        LeaveCriticalSection(&m_critical);
+        else
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
     }
 }
 

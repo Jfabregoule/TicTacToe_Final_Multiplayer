@@ -10,6 +10,10 @@ int main()
 {
     
     GameManager        gameThread;
+    if (gameThread.Init() != 0) {
+        std::cout << "GameManager Init failed" << std::endl;
+        return 1;
+    }
     gameThread.Start();
     return 0;
 }

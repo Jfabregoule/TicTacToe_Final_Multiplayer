@@ -77,6 +77,7 @@ public:
 	// Called in main
 
 	void		Start();
+	bool		Init();
 
 private:
 

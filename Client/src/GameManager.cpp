@@ -15,8 +15,6 @@ const float INPUT_BLOCK_TIME = 0.8f;
 
 GameManager::GameManager() {
 	//std::cout << "CLIENT" << std::endl;
-	m_window = new GameWindow();
-	m_icon = new sf::Image();
 
 	m_endScreen = false;
 	m_menu = true;
@@ -37,21 +35,29 @@ GameManager::GameManager() {
 
 	username = "";
 
-	m_Clock = new sf::Clock();
 	m_deltaTime = 0.f;
 	m_fpsLimit = 1.0f / 120.0f;
 	m_timeChange = 0.0f;
 
-	m_music = new Music();
-
-	m_connect = new Connect(*this);
-	m_connect->start();
 	m_previousClickState = false;
 
 
 	if (!font.loadFromFile("rsrc/font/Caveat-Regular.ttf")) {
 		std::cerr << "Erreur lors du chargement de la police" << std::endl;
 	}
+}
+
+bool	GameManager::Init() {
+	m_window = new GameWindow();
+	m_icon = new sf::Image();
+	m_music = new Music();
+	m_Clock = new sf::Clock();
+	m_connect = new Connect(*this);
+
+	m_connect->start();
+	if (m_window == NULL || m_icon == NULL || m_music == NULL || m_Clock == NULL || m_connect == NULL)
+		return 1;
+	return 0;
 }
 
 /*

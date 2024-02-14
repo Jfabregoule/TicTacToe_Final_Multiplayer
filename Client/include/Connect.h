@@ -22,6 +22,8 @@ private:
     HWND hWnd;
     GameManager& gameManager;
     CRITICAL_SECTION m_critical;
+    BOOL bRet;
+    MSG msg;
 public:
     Connect(GameManager& gm);
     ~Connect();

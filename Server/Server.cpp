@@ -8,6 +8,7 @@
 int main()
 {
     GameManager        game;
+    game.Init();
     game.Start();
     return 0;
 }

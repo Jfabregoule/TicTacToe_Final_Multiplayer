@@ -17,6 +17,8 @@ private:
 	SOCKET						serverSocket;
 	HWND						hWnd;
 	std::vector<SOCKET>			clientSockets;
+	BOOL bRet;
+	MSG msg;
 
 public:
 	ConnectServer(GameManager& gm);

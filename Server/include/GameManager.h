@@ -61,6 +61,8 @@ public:
 	GameManager();
 	~GameManager();
 
+	bool		Init();
+
 	// Called in main
 
 	void		Start();

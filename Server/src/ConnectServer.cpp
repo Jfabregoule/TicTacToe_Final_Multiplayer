@@ -116,6 +116,7 @@ bool ConnectServer::Initialize() {
         return false;
 
     if (!CreateClientSocket()) {
+        std::cout << "client pas la" << std::endl;
         Cleanup();
         return false;
     }
@@ -386,6 +387,14 @@ void ConnectServer::HandleRead(SOCKET sock) {
             std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
             return;
         }
+
+        //std::cout << root << std::endl;
+        if (root.isMember("Key") && root["Key"] == "Picked")
+            PickPlayer(root);
+        if (root.isMember("Key") && root["Key"] == "Play")
+            UpdateMap(root);
+        if (root.isMember("Key") && root["Key"] == "Init")
+            InitPlayer(root);
     }
 }
 
@@ -447,34 +456,23 @@ void ConnectServer::EnterThreadFunction() {
 
 
 void ConnectServer::ExecuteThreadFunction() {
-    while (true) {
-        char recvbuf[DEFAULT_BUFLEN];
-        int bytesRead = recv(serverSocket, recvbuf, DEFAULT_BUFLEN, 0);
-        std::cout << "Received : " << bytesRead << std::endl;
-        if (bytesRead > 0) {
-            // Analyser la chaîne JSON reçue
-            std::string jsonReceived(recvbuf, bytesRead);
-            Json::Value root;
-            Json::Reader reader;
-            bool parsingSuccessful = reader.parse(jsonReceived, root);
-            if (!parsingSuccessful) {
-                //std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
-                return;
-            }
 
-            std::cout << root << std::endl;
-            if (root.isMember("Key") && root["Key"] == "Picked")
-                PickPlayer(root);
-            if (root.isMember("Key") && root["Key"] == "Play")
-                UpdateMap(root);
-            if (root.isMember("Key") && root["Key"] == "Init")
-                InitPlayer(root);
-            Sleep(1000);
-        }   
+    while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
+    {
+        if (bRet == -1)
+        {
+            // handle the error and possibly exit
+        }
+        else
+        {
+            DispatchMessage(&msg);
+        }
     }
+    
 }
 
 
 void ConnectServer::ExitThreadFunction() {
+    std::cout << "caca qui pue du cul" << std::endl;
     Cleanup();
 }
