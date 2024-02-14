@@ -9,13 +9,13 @@ class GameManager;
 #include <SocketLib.h>
 #include "../thirdparties/jsoncpp/include/json/json.h"
 
-class ServerEventListener : public SocketLibrary::EventListener {
+class ClientEventListener : public SocketLibrary::EventListener {
 private:
 	GameManager* _gameManager;
 
 public:
-	ServerEventListener(GameManager* gameManager);
-	~ServerEventListener();
+	ClientEventListener(GameManager* gameManager);
+	~ClientEventListener();
 
 	void HandleRead(SOCKET sender) override;
 	void HandleClose(SOCKET sender) override;
@@ -68,7 +68,7 @@ private:
 
 	// Connexion attributes
 
-	ServerEventListener*			m_eventListener;
+	ClientEventListener*			m_eventListener;
 	SocketLibrary::ClientSocket*	m_socket;
 
 public:

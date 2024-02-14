@@ -42,5 +42,7 @@ namespace SocketLibrary {
 
 	public:
 		virtual bool Initialize() = 0;
+		SOCKET* AccessSocket() { return &_socket; }
+		HWND* AccessHWND() { return &_window; }
 	};
 }

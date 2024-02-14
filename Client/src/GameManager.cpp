@@ -13,18 +13,18 @@ const float INPUT_BLOCK_TIME = 0.8f;
 
 // EVENT LISTENER
 
-ServerEventListener::ServerEventListener(GameManager* gameManager)
+ClientEventListener::ClientEventListener(GameManager* gameManager)
 	: _gameManager(gameManager)
 {}
 
-ServerEventListener::~ServerEventListener()
+ClientEventListener::~ClientEventListener()
 {}
 
-void ServerEventListener::HandleRead(SOCKET sender) {
+void ClientEventListener::HandleRead(SOCKET sender) {
 	std::cout << "READING :)" << std::endl;
 }
 
-void ServerEventListener::HandleClose(SOCKET sender) {
+void ClientEventListener::HandleClose(SOCKET sender) {
 	std::cout << "CLOSING :)" << std::endl;
 }
 
@@ -491,7 +491,7 @@ void GameManager::FormatAndSendMap() {
 
 	delete[] jsonString;
 
-	if (sendResult != 0) {
+	if (sendResult == SOCKET_ERROR) {
 		std::cerr << "Error sending JSON to client." << std::endl;
 		// Gérer l'erreur de manière appropriée dans votre application
 	}
@@ -532,14 +532,12 @@ void GameManager::FormatAndSendPlayer() {
 
 	formatedJson = jsonString;
 
-	std::cout << "Sending :" << formatedJson << std::endl;
-
 	sendResult = m_socket->Send(formatedJson);
 
 	delete[] jsonString;
 
-	if (sendResult != 0) {
-		std::cerr << "Error sending JSON to client." << std::endl;
+	if (sendResult == SOCKET_ERROR) {
+		std::cerr << "Error sending JSON to client with error: " << WSAGetLastError() << std::endl;
 		// Gérer l'erreur de manière appropriée dans votre application
 	}
 }
