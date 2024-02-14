@@ -1,12 +1,80 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
+
 #include <iostream>
 #include <fstream>
+#include <SocketLib.h>
 
 #include "../include/GameManager.h"
 #include "../include/GameWindow.h"
-#include "../thirdparties/jsoncpp/include/json/json.h"
-#include "../include/ConnectServer.h"
+#include <json/json.h>
 
+#define DEFAULT_BUFLEN 512
 const float INPUT_BLOCK_TIME = 0.8f;
+
+// EVENT LISTENER
+
+ServerEventListener::ServerEventListener(GameManager* gameManager)
+	: _gameManager(gameManager)
+{}
+
+ServerEventListener::~ServerEventListener()
+{}
+
+void ServerEventListener::HandleAccept(SOCKET sender) {
+	SOCKET incomingSocket;
+	incomingSocket = accept(sender, NULL, NULL);
+	if (incomingSocket == INVALID_SOCKET) {
+		closesocket(incomingSocket);
+		std::cout << "Error accepting an incomming socket !" << std::endl;
+		return;
+	}
+	_gameManager->m_Socket->Clients.push_back(incomingSocket);
+	WSAAsyncSelect(incomingSocket,
+		*_gameManager->m_Socket->AccessHWND(),
+		WM_USER + 1, FD_READ | FD_CLOSE);
+}
+
+void ServerEventListener::HandleRead(SOCKET sender) {
+	char recvbuf[DEFAULT_BUFLEN];
+	int bytesRead = recv(sender, recvbuf, DEFAULT_BUFLEN, 0);
+	if (bytesRead > 0) {
+		// Analyser la chaîne JSON reçue
+		std::string jsonReceived(recvbuf, bytesRead);
+		Json::Value root;
+		Json::Reader reader;
+		
+		bool parsingSuccessful = reader.parse(jsonReceived, root);
+		if (!parsingSuccessful) {
+			std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+			return;
+		}
+		
+		std::cout << "Received : " << root << std::endl;
+
+		if (root.isMember("Key") && root["Key"] == "Picked")
+			_gameManager->PickPlayer(root);
+		if (root.isMember("Key") && root["Key"] == "Play")
+			_gameManager->UpdateMap(root);
+		if (root.isMember("Key") && root["Key"] == "Init")
+			_gameManager->InitPlayer(root);
+	}
+}
+
+void ServerEventListener::HandleClose(SOCKET sender) {
+	std::cout << "Connection closed" << std::endl;
+	std::vector<SOCKET>* clients = &_gameManager->m_Socket->Clients;
+	for (int i = clients->size() - 1; i >= 0; i--)
+	{
+		if (clients->at(i) == sender) {
+			clients->erase(clients->begin() + i);
+			break;
+		}
+	}
+	closesocket(sender);
+}
+
+// GAME MANAGER
 
 GameManager::GameManager() {
 
@@ -16,7 +84,6 @@ GameManager::GameManager() {
 	m_endScreen = false;
 	m_menu = true;
 	m_running = true;
-
 	m_currentTurn = 0;
 	m_currentPlayer = 1;
 
@@ -29,7 +96,8 @@ GameManager::GameManager() {
 
 	m_previousClickState = false;
 
-	m_connectServer = new ConnectServer(*this);
+	m_eventListener = new ServerEventListener(this);
+	m_Socket = new SocketLibrary::ServerSocket("21", m_eventListener);
 }
 
 /*
@@ -174,6 +242,8 @@ void GameManager::GenerateMap() {
 }
 
 void GameManager::Generate() {
+	m_player1 = 0;
+	m_player2 = 0;
 	if (m_sprites.empty())
 		GenerateSprites();
 	GenerateMap();
@@ -227,7 +297,7 @@ void GameManager::Menu() {
 	}
 	menuBackgroundSprite.setTexture(menuBackgroundTexture);
 	SetIcon();
-	PlayMusic("rsrc/music/menu.ogg");
+	//Playmusic("rsrc/music/menu.ogg");
 
 	m_timeChange = 0.0f;
 	while (m_menu) {
@@ -281,7 +351,7 @@ void GameManager::Player1WinScreen() {
 		exit(1);
 	}
 	player1BackgroundSprite.setTexture(player1BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player1win.ogg");
+	//Playmusic("rsrc/music/endscreens/player1win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -314,7 +384,7 @@ void GameManager::Player2WinScreen() {
 		exit(1);
 	}
 	player2BackgroundSprite.setTexture(player2BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player2win.ogg");
+	//Playmusic("rsrc/music/endscreens/player2win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -344,7 +414,7 @@ void GameManager::TieScreen() {
 		exit(1);
 	}
 	tieBackgroundSprite.setTexture(tieBackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/tie.ogg");
+	//Playmusic("rsrc/music/endscreens/tie.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -361,6 +431,108 @@ void GameManager::TieScreen() {
 		m_window->w_window->draw(tieBackgroundSprite);
 		m_window->w_window->display();
 		LimitFps(60.0f);
+	}
+}
+
+/*
+---------------------------------------------------------------------------------
+|						Here are all the socket methods							|
+---------------------------------------------------------------------------------
+*/
+
+void GameManager::PickPlayer(Json::Value picked)
+{
+	if (picked.isMember("Player1"))
+		if (picked["Player1"] == 1)
+			m_player1 = 1;
+	if (picked.isMember("Player2"))
+		if (picked["Player2"] == 1)
+			m_player2 = 1;
+	AlertPlayersOfPick();
+}
+
+void GameManager::UpdateMap(Json::Value play) {
+	if (play.isMember("FirstLine") || play.isMember("SecondLine") || play.isMember("ThirdLine")) {
+		std::string mapString;
+		if (play.isMember("FirstLine"))
+		{
+			mapString = play["FirstLine"].asString();
+			std::cout << mapString << std::endl;
+			for (int i = 0; i < 3; ++i) {
+				m_map[0][i] = mapString[i];
+			}
+			m_map[0][3] = '\0';
+		}
+		if (play.isMember("SecondLine"))
+		{
+			mapString = play["SecondLine"].asString();
+			std::cout << mapString << std::endl;
+			for (int i = 0; i < 3; ++i) {
+				m_map[1][i] = mapString[i];
+			}
+			m_map[1][3] = '\0';
+		}
+		if (play.isMember("ThirdLine"))
+		{
+			mapString = play["ThirdLine"].asString();
+			std::cout << mapString << std::endl;
+			for (int i = 0; i < 3; ++i) {
+				m_map[2][i] = mapString[i];
+			}
+			m_map[2][3] = '\0';
+		}
+		if (play.isMember("CurrentPlayer"))
+		{
+			if (play["CurrentPlayer"].asInt() == 1)
+				m_currentPlayer = 2;
+			else if (play["CurrentPlayer"].asInt() == 2)
+				m_currentPlayer = 1;
+		}
+	}
+	UpdateClients();
+}
+
+void GameManager::InitPlayer(Json::Value init) {
+	if (init.isMember("Username")) {
+		if (m_players.find(init["Username"].asString()) == m_players.end()) {
+			m_players[init["Username"].asString()] = 0;
+		}
+	}
+}
+
+void GameManager::UpdateClients() {
+	Json::Value root;
+	root["Key"] = "Play";
+	root["FirstLine"] = m_map[0];
+	root["SecondLine"] = m_map[1];
+	root["ThirdLine"] = m_map[2];
+	root["CurrentPlayer"] = m_currentPlayer;
+	std::cout << "Sending" << std::endl;
+	std::cout << root << std::endl;
+	std::string jsonToSend = root.toStyledString();
+
+	for (SOCKET clientSocket : m_Socket->Clients) {
+		int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
+		if (bytesSent == SOCKET_ERROR) {
+			std::cerr << "Error sending data to client" << std::endl;
+			// Gérer l'erreur, par exemple, fermer la connexion avec le client défaillant
+		}
+	}
+}
+
+void GameManager::AlertPlayersOfPick()
+{
+	Json::Value root;
+	root["Key"] = "Picked";
+	root["Player1"] = m_player1;
+	root["Player2"] = m_player2;
+	std::string jsonToSend = root.toStyledString();
+	for (SOCKET clientSocket : m_Socket->Clients) {
+		int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
+		if (bytesSent == SOCKET_ERROR) {
+			std::cerr << "Error sending data to client" << std::endl;
+			// Gérer l'erreur, par exemple, fermer la connexion avec le client défaillant
+		}
 	}
 }
 
@@ -406,15 +578,48 @@ void GameManager::Place() {
 	}
 }
 
+void GameManager::SendScore(int winner) {
+	Json::Value root;
+
+
+
+	if (winner == 1)
+	{
+		m_players[m_player1Username] += 1;
+	}
+	else if (winner == 2)
+	{
+		m_players[m_player2Username] += 1;
+	}
+
+	root["Player1Score"] = m_players[m_player1Username];
+	root["Player2Score"] = m_players[m_player2Username];
+	root["Key"] = "Score";
+
+	std::string jsonToSend = root.toStyledString();
+
+	for (SOCKET clientSocket : m_Socket->Clients) {
+		int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
+		if (bytesSent == SOCKET_ERROR) {
+			std::cerr << "Error sending data to client" << std::endl;
+			// Gérer l'erreur, par exemple, fermer la connexion avec le client défaillant
+		}
+	}
+}
+
 void GameManager::EndCheck() {
 	// Check rows
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
-			Player1WinScreen();
+			Generate();
+			SendScore(1);
+			UpdateClients();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
-			Player2WinScreen();
+			Generate();
+			SendScore(2);
+			UpdateClients();
 			return;
 		}
 	}
@@ -422,11 +627,15 @@ void GameManager::EndCheck() {
 	// Check columns
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
-			Player1WinScreen();
+			Generate();
+			SendScore(1);
+			UpdateClients();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
-			Player2WinScreen();
+			Generate();
+			SendScore(2);
+			UpdateClients();
 			return;
 		}
 	}
@@ -434,12 +643,16 @@ void GameManager::EndCheck() {
 	// Check diagonals
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
-		Player1WinScreen();
+		Generate();
+		SendScore(1);
+		UpdateClients();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
-		Player2WinScreen();
+		Generate();
+		SendScore(2);
+		UpdateClients();
 		return;
 	}
 
@@ -455,7 +668,9 @@ void GameManager::EndCheck() {
 	}
 
 	if (isTie) {
-		TieScreen();
+		Generate();
+		SendScore(0);
+		UpdateClients();
 	}
 }
 
@@ -481,10 +696,11 @@ void GameManager::HandleEvents() {
 
 void GameManager::Start() {
 	float	fps = 0;
-
+	m_Socket->Initialize();
 	Generate();
-	Menu();
-	PlayMusic("rsrc/music/theme.ogg");
+	//Menu();
+	m_menu = false;
+	//Playmusic("rsrc/music/theme.ogg");
 	while (m_running)
 	{
 		RefreshWindow();
@@ -494,7 +710,7 @@ void GameManager::Start() {
 		if (m_menu) {
 			Generate();
 			Menu();
-			PlayMusic("rsrc/music/theme.ogg");
+			//Playmusic("rsrc/music/theme.ogg");
 		}
 	}
 }
@@ -506,6 +722,8 @@ void GameManager::Start() {
 */
 
 GameManager::~GameManager() {
+	delete m_Socket;
+	delete m_eventListener;
 	delete m_window;
 	delete m_icon;
 	m_music->stop();

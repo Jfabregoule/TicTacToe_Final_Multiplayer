@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="b5cf5d0c-7264-4721-aa30-aff198ee140a" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/Server/src/ConnectServer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Server/src/ConnectServer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TicTacToe_Multiplayer.sln" beforeDir="false" afterPath="$PROJECT_DIR$/TicTacToe_Multiplayer.sln" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 1
+}]]></component>
+  <component name="ProjectId" id="2cJrqooHiGRCSatWd7QSxRGp92t" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "caillou",
+    "last_opened_file_path": "C:/Users/djorgeafonso/source/repos/Jfabregoule/TicTacToe_Final_Multiplayer"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="b5cf5d0c-7264-4721-aa30-aff198ee140a" name="Changes" comment="" />
+      <created>1707840716499</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1707840716499</updated>
+    </task>
+    <servers />
+  </component>
+</project>
