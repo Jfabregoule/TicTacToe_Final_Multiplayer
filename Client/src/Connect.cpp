@@ -7,7 +7,7 @@
 #include "iostream"
 
 const char* DEFAULT_PORT = "21";
-const char* SERVER_IP_ADDR = "10.1.170.36";
+const char* SERVER_IP_ADDR = "10.1.144.28";
 #define DEFAULT_BUFLEN 512
 
 Connect::Connect(GameManager& gm) : gameManager(gm), ConnectSocket(INVALID_SOCKET) {

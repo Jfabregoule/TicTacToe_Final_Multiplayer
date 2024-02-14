@@ -104,14 +104,14 @@ void GameManager::DrawBoard() {
 		{
 			switch (m_map[i][j])
 			{
-			case '0':
+			case 'O':
 				isEmpty = true;
 				break;
-			case 'x':
+			case 'X':
 				isEmpty = false;
 				currentSprite = *m_sprites.at(0);
 				break;
-			case '.':
+			case '_':
 				isEmpty = false;
 				currentSprite = *m_sprites.at(1);
 				break;
@@ -166,7 +166,7 @@ void GameManager::GenerateMap() {
 	{
 		for (j; j < 3; j++)
 		{
-			m_map[i][j] = '0';
+			m_map[i][j] = 'O';
 		}
 		m_map[i][j] = '\0';
 		j = 0;
@@ -380,9 +380,9 @@ void GameManager::Place() {
 
 	int i = -1, j = -1;
 	if (m_currentPlayer == 1)
-		c = 'x';
+		c = 'X';
 	else
-		c = '.';
+		c = '_';
 	if (position.x <= windowSize.x / 3)
 		j = 0;
 	else if (position.x >= windowSize.x / 3 and position.x <= windowSize.x / 3 * 2)
@@ -397,7 +397,7 @@ void GameManager::Place() {
 	else if (position.y >= windowSize.y / 3 * 2)
 		i = 2;
 
-	if (i != -1 && j != -1 && m_map[i][j] == '0') {
+	if (i != -1 && j != -1 && m_map[i][j] == 'O') {
 		toReplace = &m_map[i][j];
 		*toReplace = c;
 
@@ -411,14 +411,14 @@ void GameManager::Place() {
 void GameManager::EndCheck() {
 	// Check rows
 	for (int i = 0; i < 3; i++) {
-		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
+		if (m_map[i][0] == 'X' && m_map[i][1] == 'X' && m_map[i][2] == 'X') {
 			Generate();
 			std::cout << "SendScore:" << std::endl;
 			m_connectServer->SendScore(1);
 			m_connectServer->Update();
 			return;
 		}
-		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
+		if (m_map[i][0] == '_' && m_map[i][1] == '_' && m_map[i][2] == '_') {
 			Generate();
 			std::cout << "SendScore:" << std::endl;
 			m_connectServer->SendScore(2);
@@ -429,14 +429,14 @@ void GameManager::EndCheck() {
 
 	// Check columns
 	for (int j = 0; j < 3; j++) {
-		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
+		if (m_map[0][j] == 'X' && m_map[1][j] == 'X' && m_map[2][j] == 'X') {
 			Generate();
 			std::cout << "SendScore:" << std::endl;
 			m_connectServer->SendScore(1);
 			m_connectServer->Update();
 			return;
 		}
-		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
+		if (m_map[0][j] == '_' && m_map[1][j] == '_' && m_map[2][j] == '_') {
 			Generate();
 			std::cout << "SendScore:" << std::endl;
 			m_connectServer->SendScore(2);
@@ -446,16 +446,16 @@ void GameManager::EndCheck() {
 	}
 
 	// Check diagonals
-	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
-		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
+	if ((m_map[0][0] == 'X' && m_map[1][1] == 'X' && m_map[2][2] == 'X') ||
+		(m_map[0][2] == 'X' && m_map[1][1] == 'X' && m_map[2][0] == 'X')) {
 		Generate();
 		std::cout << "SendScore:" << std::endl;
 		m_connectServer->SendScore(1);
 		m_connectServer->Update();
 		return;
 	}
-	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
-		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
+	if ((m_map[0][0] == '_' && m_map[1][1] == '_' && m_map[2][2] == '_') ||
+		(m_map[0][2] == '_' && m_map[1][1] == '_' && m_map[2][0] == '_')) {
 		Generate();
 		std::cout << "SendScore:" << std::endl;
 		m_connectServer->SendScore(2);
@@ -467,7 +467,7 @@ void GameManager::EndCheck() {
 	bool isTie = true;
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
-			if (m_map[i][j] == '0') {
+			if (m_map[i][j] == 'O') {
 				isTie = false;
 				break;
 			}

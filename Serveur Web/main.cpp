@@ -35,7 +35,7 @@ int main()
     //bind socket to address
 
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr("10.1.170.36");
+    server.sin_addr.s_addr = inet_addr("10.1.144.28");
     server.sin_port = htons(7896);
     server_len = sizeof(server);
 
@@ -52,7 +52,7 @@ int main()
 
     int bytes = 0;
 
-    std::string strMap = "000<br>000<br>000";
+    std::string strMap = "___<br>___<br>___";
 
     while (true)
     {
