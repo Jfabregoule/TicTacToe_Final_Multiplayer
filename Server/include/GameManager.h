@@ -7,7 +7,7 @@ class GameManager;
 #include <SFML/Audio/Music.hpp>
 #include <SFML/Graphics.hpp>
 #include <SocketLib.h>
-#include "../thirdparties/jsoncpp/include/json/json.h"
+#include <json/json.h>
 
 class ServerEventListener : public SocketLibrary::EventListener {
 private:

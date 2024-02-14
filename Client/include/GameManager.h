@@ -7,7 +7,7 @@ class GameManager;
 #include <SFML/Audio/Music.hpp>
 #include <SFML/Graphics.hpp>
 #include <SocketLib.h>
-#include "../thirdparties/jsoncpp/include/json/json.h"
+#include <json/json.h>
 
 class ClientEventListener : public SocketLibrary::EventListener {
 private:
@@ -69,7 +69,7 @@ private:
 	// Connexion attributes
 
 	ClientEventListener*			m_eventListener;
-	SocketLibrary::ClientSocket*	m_socket;
+	SocketLibrary::ClientSocket*	m_Socket;
 
 public:
 
@@ -88,6 +88,8 @@ public:
 	// Called in main
 
 	void		Start();
+	void		PickPlayer(Json::Value picked);
+	void		UpdateMap(Json::Value play);
 
 private:
 
@@ -137,9 +139,6 @@ private:
 	void		HandleEvents();
 
 	// Multiplayer Methods
-	char*		convertJsonToString(const Json::Value& json, std::string key);
-	Json::Value convertStringToJson(const std::string& jsonString);
-	void		convertJsonToMap(Json::Value& json);
 	void		ChoicePlayerScreen();
 	void		enterNameScreen();
 	void		ChoosePlayer();

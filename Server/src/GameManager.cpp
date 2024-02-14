@@ -7,7 +7,7 @@
 
 #include "../include/GameManager.h"
 #include "../include/GameWindow.h"
-#include "../thirdparties/jsoncpp/include/json/json.h"
+#include <json/json.h>
 #include "../include/ConnectServer.h"
 
 #define DEFAULT_BUFLEN 512
@@ -447,7 +447,7 @@ void GameManager::PickPlayer(Json::Value picked)
 	if (picked.isMember("Player2"))
 		if (picked["Player2"] == 1)
 			m_player2 = 1;
-	UpdateClients();
+	AlertPlayersOfPick();
 }
 
 void GameManager::UpdateMap(Json::Value play) {
@@ -677,6 +677,8 @@ void GameManager::Start() {
 */
 
 GameManager::~GameManager() {
+	delete m_Socket;
+	delete m_eventListener;
 	delete m_window;
 	delete m_icon;
 	m_music->stop();

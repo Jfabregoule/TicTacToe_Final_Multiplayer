@@ -2,7 +2,7 @@
 #define NOMINMAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include "../thirdparties/jsoncpp/include/json/json.h"
+#include <json/json.h>
 
 class GameManager;
 
