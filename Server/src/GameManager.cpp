@@ -8,7 +8,6 @@
 #include "../include/GameManager.h"
 #include "../include/GameWindow.h"
 #include <json/json.h>
-#include "../include/ConnectServer.h"
 
 #define DEFAULT_BUFLEN 512
 const float INPUT_BLOCK_TIME = 0.8f;
@@ -57,6 +56,8 @@ void ServerEventListener::HandleRead(SOCKET sender) {
 			_gameManager->PickPlayer(root);
 		if (root.isMember("Key") && root["Key"] == "Play")
 			_gameManager->UpdateMap(root);
+		if (root.isMember("Key") && root["Key"] == "Init")
+			_gameManager->InitPlayer(root);
 	}
 }
 
@@ -296,7 +297,7 @@ void GameManager::Menu() {
 	}
 	menuBackgroundSprite.setTexture(menuBackgroundTexture);
 	SetIcon();
-	PlayMusic("rsrc/music/menu.ogg");
+	//Playmusic("rsrc/music/menu.ogg");
 
 	m_timeChange = 0.0f;
 	while (m_menu) {
@@ -350,7 +351,7 @@ void GameManager::Player1WinScreen() {
 		exit(1);
 	}
 	player1BackgroundSprite.setTexture(player1BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player1win.ogg");
+	//Playmusic("rsrc/music/endscreens/player1win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -383,7 +384,7 @@ void GameManager::Player2WinScreen() {
 		exit(1);
 	}
 	player2BackgroundSprite.setTexture(player2BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player2win.ogg");
+	//Playmusic("rsrc/music/endscreens/player2win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -413,7 +414,7 @@ void GameManager::TieScreen() {
 		exit(1);
 	}
 	tieBackgroundSprite.setTexture(tieBackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/tie.ogg");
+	//Playmusic("rsrc/music/endscreens/tie.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -489,6 +490,14 @@ void GameManager::UpdateMap(Json::Value play) {
 		}
 	}
 	UpdateClients();
+}
+
+void GameManager::InitPlayer(Json::Value init) {
+	if (init.isMember("Username")) {
+		if (m_players.find(init["Username"].asString()) == m_players.end()) {
+			m_players[init["Username"].asString()] = 0;
+		}
+	}
 }
 
 void GameManager::UpdateClients() {
@@ -569,16 +578,47 @@ void GameManager::Place() {
 	}
 }
 
+void GameManager::SendScore(int winner) {
+	Json::Value root;
+
+
+
+	if (winner == 1)
+	{
+		m_players[m_player1Username] += 1;
+	}
+	else if (winner == 2)
+	{
+		m_players[m_player2Username] += 1;
+	}
+
+	root["Player1Score"] = m_players[m_player1Username];
+	root["Player2Score"] = m_players[m_player2Username];
+	root["Key"] = "Score";
+
+	std::string jsonToSend = root.toStyledString();
+
+	for (SOCKET clientSocket : m_Socket->Clients) {
+		int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
+		if (bytesSent == SOCKET_ERROR) {
+			std::cerr << "Error sending data to client" << std::endl;
+			// Gérer l'erreur, par exemple, fermer la connexion avec le client défaillant
+		}
+	}
+}
+
 void GameManager::EndCheck() {
 	// Check rows
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
 			Generate();
+			SendScore(1);
 			UpdateClients();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
 			Generate();
+			SendScore(2);
 			UpdateClients();
 			return;
 		}
@@ -588,11 +628,13 @@ void GameManager::EndCheck() {
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
 			Generate();
+			SendScore(1);
 			UpdateClients();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
 			Generate();
+			SendScore(2);
 			UpdateClients();
 			return;
 		}
@@ -602,12 +644,14 @@ void GameManager::EndCheck() {
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
 		Generate();
+		SendScore(1);
 		UpdateClients();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
 		Generate();
+		SendScore(2);
 		UpdateClients();
 		return;
 	}
@@ -625,6 +669,7 @@ void GameManager::EndCheck() {
 
 	if (isTie) {
 		Generate();
+		SendScore(0);
 		UpdateClients();
 	}
 }
@@ -655,7 +700,7 @@ void GameManager::Start() {
 	Generate();
 	//Menu();
 	m_menu = false;
-	PlayMusic("rsrc/music/theme.ogg");
+	//Playmusic("rsrc/music/theme.ogg");
 	while (m_running)
 	{
 		RefreshWindow();
@@ -665,7 +710,7 @@ void GameManager::Start() {
 		if (m_menu) {
 			Generate();
 			Menu();
-			PlayMusic("rsrc/music/theme.ogg");
+			//Playmusic("rsrc/music/theme.ogg");
 		}
 	}
 }

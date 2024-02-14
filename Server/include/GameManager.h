@@ -59,11 +59,15 @@ private:
 
 public:
 
-	char							m_map[3][4];
-	int								m_currentTurn;
-	int								m_currentPlayer;
-	int								m_player1;
-	int								m_player2;
+	char						m_map[3][4];
+	int							m_currentTurn;
+	int							m_currentPlayer;
+	int							m_player1;
+	int							m_player2;
+	std::string					m_player1Username;
+	std::string					m_player2Username;
+
+	std::map<std::string, int> m_players;
 
 	SocketLibrary::ServerSocket* m_Socket;
 
@@ -114,6 +118,7 @@ private:
 
 	void		PickPlayer(Json::Value picked);
 	void		UpdateMap(Json::Value play);
+	void		InitPlayer(Json::Value init);
 	void		UpdateClients();
 	void		AlertPlayersOfPick();
 
@@ -121,6 +126,7 @@ private:
 
 	void		Place();
 	void		EndCheck();
+	void		SendScore(int winner);
 	void		HandleEvents();
 
 	friend ServerEventListener;

@@ -49,18 +49,20 @@ private:
 
 	std::vector<sf::Text>			m_textList;
 
-	std::string						username;
+	sf::Text					m_scoreText;
+
+	std::string					username;
 
 	sf::Font						font;
 
-	sf::Music*						m_music;
+	sf::Music*					m_music;
 
 	// Time attributes
 
-	sf::Clock*						m_Clock;
-	float							m_deltaTime;
-	float							m_fpsLimit;
-	float							m_timeChange;
+	sf::Clock*					m_Clock;
+	float						m_deltaTime;
+	float						m_fpsLimit;
+	float						m_timeChange;
 
 	// Textures attributes
 
@@ -73,9 +75,10 @@ private:
 
 public:
 
-	char							m_map[3][4];
-	int								m_currentTurn;
-	int								m_currentPlayer;
+	char						m_map[3][4];
+	int							m_currentTurn;
+	int							m_currentPlayer;
+	int							m_score;
 
 	int								m_player1;
 	int								m_player2;
@@ -90,6 +93,7 @@ public:
 	void		Start();
 	void		PickPlayer(Json::Value picked);
 	void		UpdateMap(Json::Value play);
+	void		UpdateScore(Json::Value score);
 
 private:
 
@@ -108,6 +112,7 @@ private:
 
 	void		GenerateSprites();
 	void		GenerateText();
+	void		GenerateScoreText();
 	void		GenerateMap();
 	void		Generate();
 
@@ -128,9 +133,9 @@ private:
 	void		TieScreen();
 
 	// Connexion related
-
 	void		FormatAndSendMap();
 	void		FormatAndSendPlayer();
+	void		FormatAndSendInit();
 
 	// Main methods
 

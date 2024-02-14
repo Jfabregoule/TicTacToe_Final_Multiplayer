@@ -10,6 +10,7 @@
 const float INPUT_BLOCK_TIME = 0.8f;
 
 #define DEFAULT_BUFLEN 512
+#define SERVER_IP_ADDR "192.168.1.18"
 
 // EVENT LISTENER
 
@@ -39,6 +40,8 @@ void ClientEventListener::HandleRead(SOCKET sender) {
 			_gameManager->PickPlayer(root);
 		if (root.isMember("Key") && root["Key"] == "Play")
 			_gameManager->UpdateMap(root);
+		if (root.isMember("Key") && root["Key"] == "Score")
+			_gameManager->UpdateScore(root);
 	}
 }
 
@@ -82,7 +85,7 @@ GameManager::GameManager() {
 	m_previousClickState = false;
 
 	m_eventListener = new ClientEventListener(this);
-	m_Socket = new SocketLibrary::ClientSocket("10.1.144.30", "21", m_eventListener);
+	m_Socket = new SocketLibrary::ClientSocket(SERVER_IP_ADDR, "21", m_eventListener);
 
 	if (!font.loadFromFile("rsrc/font/Caveat-Regular.ttf")) {
 		std::cerr << "Erreur lors du chargement de la police" << std::endl;
@@ -235,17 +238,17 @@ void GameManager::GenerateText() {
 	sf::Text textUsername("", font, 30);
 	textUsername.setPosition(100, 250);
 
-	sf::Text score("", font, 20);
-	score.setPosition(10, 10);
-
-	sf::Text textScore("Score :", font, 20);
-	textScore.setPosition(10, 10);
-
 
 	m_textList.push_back(textInstruction);
 	m_textList.push_back(textUsername);
-	m_textList.push_back(score);
-	m_textList.push_back(textScore);
+}
+
+void GameManager::GenerateScoreText() {
+	sf::Text scoreText(username + "'s Scores :" + std::to_string(m_score), font, 30);
+	scoreText.setPosition(75, 50);
+
+
+	m_scoreText = scoreText;
 }
 
 void GameManager::GenerateMap() {
@@ -265,8 +268,6 @@ void GameManager::GenerateMap() {
 void GameManager::Generate() {
 	if (m_sprites.empty())
 		GenerateSprites();
-	m_player1 = 0;
-	m_player2 = 0;
 	m_currentPlayer = 1;
 	GenerateMap();
 	GenerateText();
@@ -347,6 +348,8 @@ void GameManager::Menu() {
 			}
 		}
 		m_window->w_window->draw(menuBackgroundSprite);
+		GenerateScoreText();
+		m_window->w_window->draw(m_scoreText);
 		m_window->w_window->display();
 		LimitFps(60.0f);
 	}
@@ -509,6 +512,50 @@ void GameManager::FormatAndSendMap() {
 
 	delete[] jsonString;
 
+	if (sendResult != 0) {
+		std::cerr << "Error sending JSON to client." << std::endl;
+		// Gérer l'erreur de manière appropriée dans votre application
+	}
+}
+
+void GameManager::UpdateScore(Json::Value score) {
+	if (m_playerNumberSelf == 1)
+	{
+		m_score = score["Player1Score"].asInt();
+	}
+	else if (m_playerNumberSelf == 2)
+	{
+		m_score = score["Player2Score"].asInt();
+	}
+}
+
+void GameManager::FormatAndSendInit() {
+	// Création d'un objet Json::Value
+	const char* formatedJson;
+	Json::Value root;
+	int			sendResult;
+
+
+	// Ajout du joueur courant au JSON
+	root["Key"] = "Init";
+	root["Username"] = username;
+
+	// Création d'un objet Json::StyledWriter pour une sortie formatée
+	Json::StyledWriter writer;
+
+	// Convertir le Json::Value en chaîne JSON formatée
+	std::string jsonOutput = writer.write(root);
+
+	// Allouer de la mémoire pour la chaîne JSON en tant que const char*
+	char* jsonString = new char[jsonOutput.size() + 1];
+	strcpy_s(jsonString, jsonOutput.size() + 1, jsonOutput.c_str());
+
+	formatedJson = jsonString;
+
+	sendResult = m_Socket->Send(formatedJson);
+
+	delete[] jsonString;
+
 	if (sendResult == SOCKET_ERROR) {
 		std::cerr << "Error sending JSON to client." << std::endl;
 		// Gérer l'erreur de manière appropriée dans votre application
@@ -524,6 +571,8 @@ void GameManager::FormatAndSendPlayer() {
 
 	// Ajout du joueur courant au JSON
 	root["Key"] = "Picked";
+	root["Username"] = username;
+	root["PlayerNumber"] = m_playerNumberSelf;
 	if (m_player1 == 1)
 	{
 		root["Player1"] = 1;
@@ -565,9 +614,6 @@ void GameManager::Place() {
 	sf::Vector2i	position = sf::Mouse::getPosition(*m_window->w_window);
 	sf::Vector2u	windowSize = m_window->w_window->getSize();
 
-	std::cout << "CURENT" << m_currentPlayer << std::endl;
-	std::cout << "MYSELF" << m_playerNumberSelf << std::endl;
-
 	int i = -1, j = -1;
 	if (m_currentPlayer == 1)
 		c = 'x';
@@ -591,10 +637,10 @@ void GameManager::Place() {
 		toReplace = &m_map[i][j];
 		*toReplace = c;
 
-		//if (m_currentPlayer == 1)
-		//	m_currentPlayer = 2;
-		//else
-		//	m_currentPlayer = 1;
+		if (m_currentPlayer == 1)
+			m_currentPlayer = 2;
+		else
+			m_currentPlayer = 1;
 		FormatAndSendMap();
 	}
 }
@@ -603,11 +649,15 @@ void GameManager::EndCheck() {
 	// Check rows
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
+			m_player1 = 0;
+			m_player2 = 0;
 			Generate();
 			Player1WinScreen();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
+			m_player1 = 0;
+			m_player2 = 0;
 			Generate();
 			Player2WinScreen();
 			return;
@@ -617,11 +667,15 @@ void GameManager::EndCheck() {
 	// Check columns
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
+			m_player1 = 0;
+			m_player2 = 0;
 			Generate();
 			Player1WinScreen();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
+			m_player1 = 0;
+			m_player2 = 0;
 			Generate();
 			Player2WinScreen();
 			return;
@@ -631,12 +685,16 @@ void GameManager::EndCheck() {
 	// Check diagonals
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
+		m_player1 = 0;
+		m_player2 = 0;
 		Generate();
 		Player1WinScreen();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
+		m_player1 = 0;
+		m_player2 = 0;
 		Generate();
 		Player2WinScreen();
 		return;
@@ -654,6 +712,8 @@ void GameManager::EndCheck() {
 	}
 
 	if (isTie) {
+		m_player1 = 0;
+		m_player2 = 0;
 		Generate();
 		TieScreen();
 	}
@@ -671,16 +731,13 @@ void GameManager::HandleEvents() {
 			if (event.type == Event::Closed)
 				CloseWindow();
 
-			if (currentClickState && !m_previousClickState && m_window->w_window->hasFocus())
+			if (currentClickState && !m_previousClickState && m_window->w_window->hasFocus()) {
 				if (m_currentPlayer == m_playerNumberSelf and m_player1 == 1 and m_player2 == 1 and !m_playerSpectator)
 				{
-					std::cout << "Can place !" << std::endl;
 					Place();
 					currentClickState = false;
 				}
-				else {
-					std::cout << "Can't place !" << std::endl;
-				}
+			}
 
 			m_previousClickState = currentClickState;
 		}
@@ -691,7 +748,6 @@ void GameManager::PickPlayer(Json::Value picked) {
 	if (picked.isMember("Player1"))
 		if (picked["Player1"] == 1) {
 			m_player1 = 1;
-			std::cout << "mPlayer1 defined !" << std::endl;
 		}
 	if (picked.isMember("Player2"))
 		if (picked["Player2"] == 1)
@@ -836,6 +892,7 @@ void GameManager::enterNameScreen() {
 					}
 				}
 				if (event.key.code == sf::Keyboard::Enter) {
+					FormatAndSendInit();
 					m_username = false;
 					m_menu = true;
 					Menu();
