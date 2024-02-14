@@ -2,9 +2,24 @@
 
 class GameWindow;
 class Connect;
+class GameManager;
 
 #include <SFML/Audio/Music.hpp>
-#include "../thirdparties/jsoncpp/include/json/json.h"
+#include <SFML/Graphics.hpp>
+#include <SocketLib.h>
+#include <json/json.h>
+
+class ClientEventListener : public SocketLibrary::EventListener {
+private:
+	GameManager* _gameManager;
+
+public:
+	ClientEventListener(GameManager* gameManager);
+	~ClientEventListener();
+
+	void HandleRead(SOCKET sender) override;
+	void HandleClose(SOCKET sender) override;
+};
 
 class GameManager
 {
@@ -13,39 +28,57 @@ private:
 
 	// Window attributes
 
-	GameWindow*					m_window;
-	sf::Image*					m_icon;
+	GameWindow*						m_window;
+	sf::Image*						m_icon;
 
 	// Game attributes
 
-	bool						m_running;
+	bool							m_running;
 
-	char						m_map[3][4];
-	int							m_currentTurn;
-	int							m_currentPlayer;
-	bool						m_previousClickState;
+	bool							m_previousClickState;
 
-	bool						m_menu;
-	bool						m_endScreen;
+	bool							m_menu;
+	bool							m_endScreen;
+	bool							m_choiceScreen;
+	bool							m_username;
 
-	sf::Music* m_music;
+	int								m_playerNumberSelf;
+	int								m_playerNumberEnemy;
+
+	bool							m_playerSpectator;
+
+	std::vector<sf::Text>			m_textList;
+
+	std::string						username;
+
+	sf::Font						font;
+
+	sf::Music*						m_music;
 
 	// Time attributes
 
-	sf::Clock* m_Clock;
-	float						m_deltaTime;
-	float						m_fpsLimit;
-	float						m_timeChange;
+	sf::Clock*						m_Clock;
+	float							m_deltaTime;
+	float							m_fpsLimit;
+	float							m_timeChange;
 
 	// Textures attributes
 
-	std::vector<sf::Sprite*>	m_sprites;
+	std::vector<sf::Sprite*>		m_sprites;
 
 	// Connexion attributes
 
-	Connect*					m_connect;
+	ClientEventListener*			m_eventListener;
+	SocketLibrary::ClientSocket*	m_Socket;
 
 public:
+
+	char							m_map[3][4];
+	int								m_currentTurn;
+	int								m_currentPlayer;
+
+	int								m_player1;
+	int								m_player2;
 
 	// Constructor/Destructor
 
@@ -55,6 +88,8 @@ public:
 	// Called in main
 
 	void		Start();
+	void		PickPlayer(Json::Value picked);
+	void		UpdateMap(Json::Value play);
 
 private:
 
@@ -65,12 +100,14 @@ private:
 	void		LimitFps(float fps);
 	void		DrawTerrain();
 	void		DrawBoard();
+	void		DrawWord();
 	void		Sleep();
 	void		RefreshWindow();
 
 	// Generation related
 
 	void		GenerateSprites();
+	void		GenerateText();
 	void		GenerateMap();
 	void		Generate();
 
@@ -92,12 +129,18 @@ private:
 
 	// Connexion related
 
-	void		InitConnexion();
 	void		FormatAndSendMap();
+	void		FormatAndSendPlayer();
 
 	// Main methods
 
 	void		Place();
 	void		EndCheck();
 	void		HandleEvents();
+
+	// Multiplayer Methods
+	void		ChoicePlayerScreen();
+	void		enterNameScreen();
+	void		ChoosePlayer();
+	bool		PlayerVerification(int playerNumber);
 };

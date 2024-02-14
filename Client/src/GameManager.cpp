@@ -1,28 +1,76 @@
 #include <iostream>
 #include <fstream>
 #include <SFML/Graphics.hpp>
+#include <SocketLib.h>
 
 #include "../include/GameManager.h"
 #include "../include/GameWindow.h"
-#include "../thirdparties/jsoncpp/include/json/json.h"
-#include "../include/Connect.h"
+#include <json/json.h>
 
 const float INPUT_BLOCK_TIME = 0.8f;
 
 #define DEFAULT_BUFLEN 512
 
+// EVENT LISTENER
+
+ClientEventListener::ClientEventListener(GameManager* gameManager)
+	: _gameManager(gameManager)
+{}
+
+ClientEventListener::~ClientEventListener()
+{}
+
+void ClientEventListener::HandleRead(SOCKET sender) {
+	char recvbuf[DEFAULT_BUFLEN];
+	int bytesRead = recv(sender, recvbuf, DEFAULT_BUFLEN, 0);
+	//std::cout << "Received : " << recvbuf << std::endl;
+	if (bytesRead > 0) {
+		// Analyser la chaîne JSON reçue
+		std::string jsonReceived(recvbuf, bytesRead);
+		Json::Value root;
+		Json::Reader reader;
+		bool parsingSuccessful = reader.parse(jsonReceived, root);
+		if (!parsingSuccessful) {
+			// std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+			return;
+		}
+
+		if (root.isMember("Key") && root["Key"] == "Picked")
+			_gameManager->PickPlayer(root);
+		if (root.isMember("Key") && root["Key"] == "Play")
+			_gameManager->UpdateMap(root);
+	}
+}
+
+void ClientEventListener::HandleClose(SOCKET sender) {
+	closesocket(sender);
+}
+
+// GAME MANAGER
 
 GameManager::GameManager() {
-	std::cout << "CLIENT" << std::endl;
+	//std::cout << "CLIENT" << std::endl;
 	m_window = new GameWindow();
 	m_icon = new sf::Image();
 
 	m_endScreen = false;
 	m_menu = true;
 	m_running = true;
+	m_username = true;
+	m_choiceScreen = false;
 
 	m_currentTurn = 0;
 	m_currentPlayer = 1;
+
+	m_playerNumberSelf = -1;
+	m_playerNumberEnemy = -1;
+
+	m_player1 = 0;
+	m_player2 = 0;
+
+	m_playerSpectator = false;
+
+	username = "";
 
 	m_Clock = new sf::Clock();
 	m_deltaTime = 0.f;
@@ -33,7 +81,12 @@ GameManager::GameManager() {
 
 	m_previousClickState = false;
 
-	m_connect = new Connect;
+	m_eventListener = new ClientEventListener(this);
+	m_Socket = new SocketLibrary::ClientSocket("10.1.144.30", "21", m_eventListener);
+
+	if (!font.loadFromFile("rsrc/font/Caveat-Regular.ttf")) {
+		std::cerr << "Erreur lors du chargement de la police" << std::endl;
+	}
 }
 
 /*
@@ -45,7 +98,7 @@ GameManager::GameManager() {
 void GameManager::SetIcon() {
 	if (!m_icon->loadFromFile("rsrc/img/icon/icon.png"))
 	{
-		std::cout << "Error loading icon" << std::endl;
+		//std::cout << "Error loading icon" << std::endl;
 		exit(1);
 	}
 	m_window->w_window->setIcon(m_icon->getSize().x, m_icon->getSize().y, m_icon->getPixelsPtr());
@@ -133,7 +186,19 @@ void GameManager::DrawBoard() {
 	}
 }
 
+void GameManager::DrawWord() {
+	if (m_username) {
+		m_window->w_window->draw(m_textList[0]);
+		m_window->w_window->draw(m_textList[1]);
+	}
+	else if (m_menu) {
+		m_window->w_window->draw(m_textList[2]);
+		m_window->w_window->draw(m_textList[3]);
+	}
+}
+
 void GameManager::RefreshWindow() {
+	m_username = false;
 	m_window->RefreshScreen();
 	DrawTerrain();
 	DrawBoard();
@@ -150,7 +215,7 @@ void GameManager::GenerateSprites() {
 	sf::Texture* crossTexture = new sf::Texture();
 	sf::Texture* circleTexture = new sf::Texture();
 	if (!crossTexture->loadFromFile("rsrc/img/objects/cross.png") or !circleTexture->loadFromFile("rsrc/img/objects/circle.png")) {
-		std::cout << "Error loading object textures." << std::endl;
+		//std::cout << "Error loading object textures." << std::endl;
 		exit(1);
 	}
 
@@ -161,6 +226,26 @@ void GameManager::GenerateSprites() {
 	sf::Sprite* circleSprite = new sf::Sprite();
 	circleSprite->setTexture(*circleTexture);
 	m_sprites.push_back(circleSprite);
+}
+
+void GameManager::GenerateText() {
+	sf::Text textInstruction("Entrez votre nom d'utilisateur :", font, 30);
+	textInstruction.setPosition(100, 200);
+
+	sf::Text textUsername("", font, 30);
+	textUsername.setPosition(100, 250);
+
+	sf::Text score("", font, 20);
+	score.setPosition(10, 10);
+
+	sf::Text textScore("Score :", font, 20);
+	textScore.setPosition(10, 10);
+
+
+	m_textList.push_back(textInstruction);
+	m_textList.push_back(textUsername);
+	m_textList.push_back(score);
+	m_textList.push_back(textScore);
 }
 
 void GameManager::GenerateMap() {
@@ -180,7 +265,11 @@ void GameManager::GenerateMap() {
 void GameManager::Generate() {
 	if (m_sprites.empty())
 		GenerateSprites();
+	m_player1 = 0;
+	m_player2 = 0;
+	m_currentPlayer = 1;
 	GenerateMap();
+	GenerateText();
 
 	//GenerateHud();
 }
@@ -194,7 +283,7 @@ void GameManager::Generate() {
 void	GameManager::PlayMusic(const char* path) {
 	m_music->stop();
 	if (!m_music->openFromFile(path)) {
-		std::cout << "Error loading " << path << std::endl;
+		//std::cout << "Error loading " << path << std::endl;
 		exit(1);
 	}
 	m_music->setVolume(10.0f);
@@ -213,7 +302,18 @@ void GameManager::ChooseMenu() {
 	sf::Vector2u	windowSize = m_window->w_window->getSize();
 
 	if (position.y <= windowSize.y / 2)
-		m_menu = false;
+	{
+		if (m_player1 == 1 and m_player2 == 1)
+		{
+			m_menu = false;
+			m_choiceScreen = false;
+			m_playerSpectator = true;
+		}
+		else {
+			m_playerSpectator = false;
+			ChoicePlayerScreen();
+		}
+	}
 	else if (position.y > windowSize.y / 2) {
 		m_menu = false;
 		m_running = false;
@@ -226,12 +326,12 @@ void GameManager::Menu() {
 	sf::Sprite	menuBackgroundSprite;
 
 	if (!menuBackgroundTexture.loadFromFile("rsrc/img/menu/background.png")) {
-		std::cout << "Error loading menu background image" << std::endl;
+		//std::cout << "Error loading menu background image" << std::endl;
 		exit(1);
 	}
 	menuBackgroundSprite.setTexture(menuBackgroundTexture);
 	SetIcon();
-	PlayMusic("rsrc/music/menu.ogg");
+	//PlayMusic("rsrc/music/menu.ogg");
 
 	m_timeChange = 0.0f;
 	while (m_menu) {
@@ -267,6 +367,10 @@ void GameManager::ChooseEnd() {
 	if (position.y <= windowSize.y / 2) {
 		m_menu = true;
 		m_endScreen = false;
+
+		m_playerNumberSelf = -1;
+		m_playerNumberEnemy = -1;
+		Menu();
 	}
 	else if (position.y > windowSize.y / 2) {
 		m_endScreen = false;
@@ -281,11 +385,11 @@ void GameManager::Player1WinScreen() {
 	sf::Sprite	player1BackgroundSprite;
 
 	if (!player1BackgroundTexture.loadFromFile("rsrc/img/end/player1background.png")) {
-		std::cout << "Error loading player 1 win screen background image" << std::endl;
+		//std::cout << "Error loading player 1 win screen background image" << std::endl;
 		exit(1);
 	}
 	player1BackgroundSprite.setTexture(player1BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player1win.ogg");
+	//PlayMusic("rsrc/music/endscreens/player1win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -314,11 +418,11 @@ void GameManager::Player2WinScreen() {
 	sf::Sprite	player2BackgroundSprite;
 
 	if (!player2BackgroundTexture.loadFromFile("rsrc/img/end/player2background.png")) {
-		std::cout << "Error loading player 2 win screen background image" << std::endl;
+		//std::cout << "Error loading player 2 win screen background image" << std::endl;
 		exit(1);
 	}
 	player2BackgroundSprite.setTexture(player2BackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/player2win.ogg");
+	//PlayMusic("rsrc/music/endscreens/player2win.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -344,11 +448,11 @@ void GameManager::TieScreen() {
 	sf::Sprite	tieBackgroundSprite;
 
 	if (!tieBackgroundTexture.loadFromFile("rsrc/img/end/tiebackground.png")) {
-		std::cout << "Error loading tie screen background image" << std::endl;
+		//std::cout << "Error loading tie screen background image" << std::endl;
 		exit(1);
 	}
 	tieBackgroundSprite.setTexture(tieBackgroundTexture);
-	PlayMusic("rsrc/music/endscreens/tie.ogg");
+	//PlayMusic("rsrc/music/endscreens/tie.ogg");
 
 	m_endScreen = true;
 	m_timeChange = 0.0f;
@@ -381,12 +485,13 @@ void GameManager::FormatAndSendMap() {
 	int			sendResult;
 
 	// Ajout des lignes de la carte au JSON
+	root["Key"] = "Play";
 	root["FirstLine"] = m_map[0];
 	root["SecondLine"] = m_map[1];
 	root["ThirdLine"] = m_map[2];
 
 	// Ajout du joueur courant au JSON
-	root["CurrentPlayer"] = m_currentPlayer;
+	root["CurrentPlayer"] = m_playerNumberSelf;
 
 	// Création d'un objet Json::StyledWriter pour une sortie formatée
 	Json::StyledWriter writer;
@@ -400,21 +505,68 @@ void GameManager::FormatAndSendMap() {
 
 	formatedJson = jsonString;
 
-	sendResult = m_connect->Send(formatedJson);
+	sendResult = m_Socket->Send(formatedJson);
 
 	delete[] jsonString;
 
-	if (sendResult != 0) {
+	if (sendResult == SOCKET_ERROR) {
 		std::cerr << "Error sending JSON to client." << std::endl;
+		// Gérer l'erreur de manière appropriée dans votre application
+	}
+}
+
+void GameManager::FormatAndSendPlayer() {
+	// Création d'un objet Json::Value
+	const char* formatedJson;
+	Json::Value root;
+	int			sendResult;
+
+
+	// Ajout du joueur courant au JSON
+	root["Key"] = "Picked";
+	if (m_player1 == 1)
+	{
+		root["Player1"] = 1;
+	}
+	else {
+		root["Player1"] = 0;
+	}
+	if (m_player2 == 1) {
+		root["Player2"] = 1;
+	}
+	else {
+		root["Player2"] = 0;
+	}
+
+	// Création d'un objet Json::StyledWriter pour une sortie formatée
+	Json::StyledWriter writer;
+
+	// Convertir le Json::Value en chaîne JSON formatée
+	std::string jsonOutput = writer.write(root);
+
+	// Allouer de la mémoire pour la chaîne JSON en tant que const char*
+	char* jsonString = new char[jsonOutput.size() + 1];
+	strcpy_s(jsonString, jsonOutput.size() + 1, jsonOutput.c_str());
+
+	formatedJson = jsonString;
+	sendResult = m_Socket->Send(formatedJson);
+
+	delete[] jsonString;
+
+	if (sendResult == SOCKET_ERROR) {
+		std::cerr << "Error sending JSON to client with error: " << WSAGetLastError() << std::endl;
 		// Gérer l'erreur de manière appropriée dans votre application
 	}
 }
 
 void GameManager::Place() {
 	char			c;
-	char*			toReplace = nullptr;
+	char* toReplace = nullptr;
 	sf::Vector2i	position = sf::Mouse::getPosition(*m_window->w_window);
 	sf::Vector2u	windowSize = m_window->w_window->getSize();
+
+	std::cout << "CURENT" << m_currentPlayer << std::endl;
+	std::cout << "MYSELF" << m_playerNumberSelf << std::endl;
 
 	int i = -1, j = -1;
 	if (m_currentPlayer == 1)
@@ -439,10 +591,10 @@ void GameManager::Place() {
 		toReplace = &m_map[i][j];
 		*toReplace = c;
 
-		if (m_currentPlayer == 1)
-			m_currentPlayer = 2;
-		else
-			m_currentPlayer = 1;
+		//if (m_currentPlayer == 1)
+		//	m_currentPlayer = 2;
+		//else
+		//	m_currentPlayer = 1;
 		FormatAndSendMap();
 	}
 }
@@ -451,10 +603,12 @@ void GameManager::EndCheck() {
 	// Check rows
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
+			Generate();
 			Player1WinScreen();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
+			Generate();
 			Player2WinScreen();
 			return;
 		}
@@ -463,10 +617,12 @@ void GameManager::EndCheck() {
 	// Check columns
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
+			Generate();
 			Player1WinScreen();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
+			Generate();
 			Player2WinScreen();
 			return;
 		}
@@ -475,11 +631,13 @@ void GameManager::EndCheck() {
 	// Check diagonals
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
+		Generate();
 		Player1WinScreen();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
+		Generate();
 		Player2WinScreen();
 		return;
 	}
@@ -496,6 +654,7 @@ void GameManager::EndCheck() {
 	}
 
 	if (isTie) {
+		Generate();
 		TieScreen();
 	}
 }
@@ -513,33 +672,76 @@ void GameManager::HandleEvents() {
 				CloseWindow();
 
 			if (currentClickState && !m_previousClickState && m_window->w_window->hasFocus())
-				Place();
+				if (m_currentPlayer == m_playerNumberSelf and m_player1 == 1 and m_player2 == 1 and !m_playerSpectator)
+				{
+					std::cout << "Can place !" << std::endl;
+					Place();
+					currentClickState = false;
+				}
+				else {
+					std::cout << "Can't place !" << std::endl;
+				}
 
 			m_previousClickState = currentClickState;
 		}
 	}
 }
 
-void GameManager::InitConnexion() {
-	// Initialize the connection
-	int initResult = m_connect->initialize();
+void GameManager::PickPlayer(Json::Value picked) {
+	if (picked.isMember("Player1"))
+		if (picked["Player1"] == 1) {
+			m_player1 = 1;
+			std::cout << "mPlayer1 defined !" << std::endl;
+		}
+	if (picked.isMember("Player2"))
+		if (picked["Player2"] == 1)
+			m_player2 = 1;
+}
 
-	// Check if initialization was successful
-	if (initResult != 0) {
-		std::cerr << "Error initializing connection." << std::endl;
-		exit(1); // Exit the program if initialization fails
+void GameManager::UpdateMap(Json::Value play) {
+	if (play.isMember("FirstLine") || play.isMember("SecondLine") || play.isMember("ThirdLine")) {
+		std::string mapString;
+		if (play.isMember("FirstLine"))
+		{
+			mapString = play["FirstLine"].asString();
+			//std::cout << mapString << std::endl;
+			for (int i = 0; i < 3; ++i) {
+				m_map[0][i] = mapString[i];
+			}
+			m_map[0][3] = '\0';
+		}
+		if (play.isMember("SecondLine"))
+		{
+			mapString = play["SecondLine"].asString();
+			//std::cout << mapString << std::endl;
+			for (int i = 0; i < 3; ++i) {
+				m_map[1][i] = mapString[i];
+			}
+			m_map[1][3] = '\0';
+		}
+		if (play.isMember("ThirdLine"))
+		{
+			mapString = play["ThirdLine"].asString();
+			//std::cout << mapString << std::endl;
+			for (int i = 0; i < 3; ++i) {
+				m_map[2][i] = mapString[i];
+			}
+			m_map[2][3] = '\0';
+		}
+		if (play.isMember("CurrentPlayer"))
+		{
+			m_currentPlayer = play["CurrentPlayer"].asInt();
+		}
 	}
-
-	std::cout << "Connection initialized successfully." << std::endl;
 }
 
 void GameManager::Start() {
 	float	fps = 0;
-
+	m_Socket->Initialize();
 	Generate();
-	Menu();
-	PlayMusic("rsrc/music/theme.ogg");
-	InitConnexion();
+	//Menu();
+	//PlayMusic("rsrc/music/theme.ogg");
+	enterNameScreen();
 	while (m_running)
 	{
 		RefreshWindow();
@@ -548,10 +750,174 @@ void GameManager::Start() {
 		LimitFps(fps);
 		if (m_menu) {
 			Generate();
-			Menu();
-			PlayMusic("rsrc/music/theme.ogg");
+			enterNameScreen();
+			//Menu();
+			//PlayMusic("rsrc/music/theme.ogg");
 		}
 	}
+}
+
+
+/*
+---------------------------------------------------------------------------------
+|						Here is the Multiplayers methods						|
+---------------------------------------------------------------------------------
+*/
+
+void GameManager::ChoosePlayer() {
+	sf::Vector2i	position = sf::Mouse::getPosition(*m_window->w_window);
+	sf::Vector2u	windowSize = m_window->w_window->getSize();
+
+	if (position.y <= windowSize.y / 2) {
+		if (PlayerVerification(1))
+		{
+			m_player1 = 1;
+			FormatAndSendPlayer();
+			m_menu = false;
+			m_choiceScreen = false;
+			Generate();
+		}else if (m_player1 == 1 and m_player2 == 1) {
+			m_playerSpectator = true;
+			m_menu = false;
+			m_choiceScreen = false;
+			Generate();
+		}
+	}
+	else if (position.y > windowSize.y / 2) {
+		if (PlayerVerification(2))
+		{
+			//std::cout << "Player 2 picked" << std::endl;
+			m_player2 = 1;
+			FormatAndSendPlayer();
+			m_menu = false;
+			m_choiceScreen = false;
+			Generate();
+		}else if (m_player1 == 1 and m_player2 == 1) {
+			m_playerSpectator = true;
+			m_menu = false;
+			m_choiceScreen = false;
+			Generate();
+		}
+	}
+}
+
+void GameManager::enterNameScreen() {
+	Event		event;
+	sf::Texture	menuBackgroundTexture;
+	sf::Sprite	menuBackgroundSprite;
+
+	if (!menuBackgroundTexture.loadFromFile("rsrc/img/menu/PlayerName.png")) {
+		//std::cout << "Error loading menu background image" << std::endl;
+		exit(1);
+	}
+
+	menuBackgroundSprite.setTexture(menuBackgroundTexture);
+	while (m_username) {
+		while (m_window->w_window->pollEvent(event))
+		{
+			if (m_timeChange > INPUT_BLOCK_TIME)
+			{
+				if (event.type == Event::Closed)
+					CloseWindow();
+
+				if (event.type == sf::Event::TextEntered) {
+					if (event.text.unicode < 128) {
+						char enteredChar = static_cast<char>(event.text.unicode);
+						if (enteredChar == '\b' && !username.empty()) {
+							// Backspace : supprimer le dernier caractère
+							username.pop_back();
+						}
+						else if (enteredChar != '\b') {
+							// Ajouter le caractère à la chaîne du nom d'utilisateur
+							username += enteredChar;
+						}
+						// Mettre à jour le texte affiché
+						m_textList[1].setString(username);
+					}
+				}
+				if (event.key.code == sf::Keyboard::Enter) {
+					m_username = false;
+					m_menu = true;
+					Menu();
+				}
+			}
+		}
+		m_window->w_window->draw(menuBackgroundSprite);
+		DrawWord();
+		m_window->w_window->display();
+		LimitFps(60.0f);
+	}
+}
+
+void GameManager::ChoicePlayerScreen() {
+	Event		event;
+	sf::Texture	choiceBackgroundTexture;
+	sf::Sprite	choiceBackgroundSprite;
+
+	if (!choiceBackgroundTexture.loadFromFile("rsrc/img/playerChoice/choiceBackground.png")) {
+		//std::cout << "Error loading choice player screen background image" << std::endl;
+		exit(1);
+	}
+	choiceBackgroundSprite.setTexture(choiceBackgroundTexture);
+	//PlayMusic("rsrc/music/endscreens/player1win.ogg");
+
+	m_choiceScreen = true;
+	m_timeChange = 0.0f;
+	//m_timeChange = 0.0f;
+	while (m_choiceScreen) {
+
+		while (m_window->w_window->pollEvent(event))
+		{
+			if (m_timeChange > INPUT_BLOCK_TIME)
+			{
+				if (event.type == Event::Closed)
+					CloseWindow();
+
+				if (Mouse::isButtonPressed(Mouse::Button::Left) && m_window->w_window->hasFocus())
+					ChoosePlayer();
+			}
+		}
+		m_window->w_window->draw(choiceBackgroundSprite);
+		m_window->w_window->display();
+		LimitFps(60.0f);
+	}
+}
+
+bool GameManager::PlayerVerification(int playerNumber) {
+	if ((m_player1 == 0 and playerNumber == 1) or (m_player2 == 0 and playerNumber == 2))
+	{
+		m_playerNumberSelf = playerNumber;
+
+		if (playerNumber == 1) {
+			m_playerNumberEnemy = 2;
+		}
+		else {
+			m_playerNumberEnemy = 1;
+		}
+
+		/*if (m_playerNumberEnemy == -1) {
+
+			if (playerNumber == 1) {
+				m_playerNumberEnemy = 2;
+			}
+			else {
+				m_playerNumberEnemy = 1;
+			}
+
+			return true;
+		}
+		else if (m_playerNumberEnemy == 1 && playerNumber == 2) {
+			m_playerNumberSelf = 2;
+			return true;
+		}
+		else if (m_playerNumberEnemy == 2 && playerNumber == 1) {
+			m_playerNumberSelf = 1;
+			return true;
+		}*/
+		return true;
+	}
+	
+	return false;
 }
 
 /*
@@ -561,6 +927,8 @@ void GameManager::Start() {
 */
 
 GameManager::~GameManager() {
+	delete m_Socket;
+	delete m_eventListener;
 	delete m_window;
 	delete m_icon;
 	m_music->stop();

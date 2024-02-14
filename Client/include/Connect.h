@@ -1,6 +1,10 @@
 #pragma once
+#define NOMINMAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <json/json.h>
+
+class GameManager;
 
 class Connect
 {
@@ -14,8 +18,9 @@ private:
     int iResult;
     int recvbuflen;
     HWND hWnd;
+    GameManager& gameManager;
 public:
-    Connect();
+    Connect(GameManager& gm);
     ~Connect();
     bool InitializeWinSock();
     SOCKET CreateAndConnectSocket(const char* serverAddress);
@@ -27,6 +32,15 @@ public:
     int Send(char* buff);
     int Send(const char* buff);
     int initialize();
+
+    void EventDispatcher(int fdEvent, SOCKET sock);
+    void HandleAccept(SOCKET sock);
+    void HandleRead(SOCKET sock);
+    void HandleClose(SOCKET sock);
+
+    void PickPlayer(Json::Value picked);
+    void UpdateMap(Json::Value play);
+
     static LRESULT CALLBACK ClientWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 };

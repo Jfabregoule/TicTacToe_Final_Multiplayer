@@ -6,13 +6,14 @@
 #include <vector>
 
 #include "../include/ConnectServer.h"
-#include "../thirdparties/jsoncpp/include/json/json.h"
+#include <json/json.h>
 #include "../include/GameManager.h"
 
 #define DEFAULT_PORT "21"
 #define DEFAULT_BUFLEN 512
 
 ConnectServer::ConnectServer(GameManager& gm) : gameManager(gm), serverSocket(INVALID_SOCKET), hWnd(NULL) {
+    clientSockets.clear();
     Initialize();
 }
 
@@ -140,6 +141,42 @@ bool ConnectServer::Initialize() {
     return true;
 }
 
+void ConnectServer::UpdatePlayers() {
+    Json::Value root;
+    root["Key"] = "Picked";
+    root["Player1"] = gameManager.m_player1;
+    root["Player2"] = gameManager.m_player2;
+    std::string jsonToSend = root.toStyledString();
+
+    for (SOCKET clientSocket : clientSockets) {
+        int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
+        if (bytesSent == SOCKET_ERROR) {
+            std::cerr << "Error sending data to client" << std::endl;
+            // Gérer l'erreur, par exemple, fermer la connexion avec le client défaillant
+        }
+    }
+}
+
+void ConnectServer::Update() {
+    Json::Value root;
+    root["Key"] = "Play";
+    root["FirstLine"] = gameManager.m_map[0];
+    root["SecondLine"] = gameManager.m_map[1];
+    root["ThirdLine"] = gameManager.m_map[2];
+    root["CurrentPlayer"] = gameManager.m_currentPlayer;
+    std::cout << "Sending" << std::endl;
+    std::cout << root << std::endl;
+    std::string jsonToSend = root.toStyledString();
+
+    for (SOCKET clientSocket : clientSockets) {
+        int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
+        if (bytesSent == SOCKET_ERROR) {
+            std::cerr << "Error sending data to client" << std::endl;
+            // Gérer l'erreur, par exemple, fermer la connexion avec le client défaillant
+        }
+    }
+}
+
 void ConnectServer::HandleAccept(SOCKET sock) {
     SOCKET incomingSocket;
     incomingSocket = accept(sock, NULL, NULL);
@@ -152,9 +189,63 @@ void ConnectServer::HandleAccept(SOCKET sock) {
     WSAAsyncSelect(incomingSocket, hWnd, WM_USER + 1, FD_READ | FD_CLOSE);
 }
 
+void ConnectServer::PickPlayer(Json::Value picked)
+{
+    if (picked.isMember("Player1"))
+        if (picked["Player1"] == 1)
+            gameManager.m_player1 = 1;
+    if (picked.isMember("Player2"))
+        if (picked["Player2"] == 1)
+            gameManager.m_player2 = 1;
+    UpdatePlayers();
+}
+
+void ConnectServer::UpdateMap(Json::Value play)
+{
+    if (play.isMember("FirstLine") || play.isMember("SecondLine") || play.isMember("ThirdLine")) {
+        std::string mapString;
+        if (play.isMember("FirstLine"))
+        {
+            mapString = play["FirstLine"].asString();
+            std::cout << mapString << std::endl;
+            for (int i = 0; i < 3; ++i) {
+                gameManager.m_map[0][i] = mapString[i];
+            }
+            gameManager.m_map[0][3] = '\0';
+        }
+        if (play.isMember("SecondLine"))
+        {
+            mapString = play["SecondLine"].asString();
+            std::cout << mapString << std::endl;
+            for (int i = 0; i < 3; ++i) {
+                gameManager.m_map[1][i] = mapString[i];
+            }
+            gameManager.m_map[1][3] = '\0';
+        }
+        if (play.isMember("ThirdLine"))
+        {
+            mapString = play["ThirdLine"].asString();
+            std::cout << mapString << std::endl;
+            for (int i = 0; i < 3; ++i) {
+                gameManager.m_map[2][i] = mapString[i];
+            }
+            gameManager.m_map[2][3] = '\0';
+        }
+        if (play.isMember("CurrentPlayer"))
+        {
+            if (play["CurrentPlayer"].asInt() == 1)
+                gameManager.m_currentPlayer = 2;
+            else if (play["CurrentPlayer"].asInt() == 2)
+                gameManager.m_currentPlayer = 1;
+        }
+    }
+    Update();
+}
+
 void ConnectServer::HandleRead(SOCKET sock) {
     char recvbuf[DEFAULT_BUFLEN];
     int bytesRead = recv(sock, recvbuf, DEFAULT_BUFLEN, 0);
+    std::cout << "Received : " << recvbuf << std::endl;
     if (bytesRead > 0) {
         // Analyser la chaîne JSON reçue
         std::string jsonReceived(recvbuf, bytesRead);
@@ -166,45 +257,10 @@ void ConnectServer::HandleRead(SOCKET sock) {
             return;
         }
 
-        if (root.isMember("FirstLine") || root.isMember("SecondLine") || root.isMember("ThirdLine")) {
-            std::string mapString;
-            if (root.isMember("FirstLine"))
-            {
-                mapString = root["FirstLine"].asString();
-                std::cout << mapString << std::endl;
-                for (int i = 0; i < 3; ++i) {
-                    gameManager.m_map[0][i] = mapString[i];
-                }
-                gameManager.m_map[0][3] = '\0';
-            }
-            if (root.isMember("SecondLine"))
-            {
-                mapString = root["SecondLine"].asString();
-                std::cout << mapString << std::endl;
-                for (int i = 0; i < 3; ++i) {
-                    gameManager.m_map[1][i] = mapString[i];
-                }
-                gameManager.m_map[1][3] = '\0';
-            }
-            if (root.isMember("ThirdLine"))
-            {
-                mapString = root["ThirdLine"].asString();
-                std::cout << mapString << std::endl;
-                for (int i = 0; i < 3; ++i) {
-                    gameManager.m_map[2][i] = mapString[i];
-                }
-                gameManager.m_map[2][3] = '\0';
-            }
-        }
-
-        // Afficher la carte mise à jour
-        std::cout << "Carte mise à jour : " << std::endl;
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 3; ++j) {
-                std::cout << gameManager.m_map[i][j] << " ";
-            }
-            std::cout << std::endl;
-        }
+        if (root.isMember("Key") && root["Key"] == "Picked")
+            PickPlayer(root);
+        if (root.isMember("Key") && root["Key"] == "Play")
+            UpdateMap(root);
     }
 }
 
@@ -247,6 +303,10 @@ LRESULT CALLBACK ConnectServer::ServerWindowProc(HWND hwnd, UINT uMsg, WPARAM wP
         SOCKET sock = wParam; // Socket client qui fait la requête
 
         pServer->EventDispatcher(fdEvent, sock);
+        if (pServer->gameManager.m_currentPlayer == 1)
+            pServer->gameManager.m_currentPlayer = 2;
+        else
+            pServer->gameManager.m_currentPlayer = 1;
     }
     default:
         return DefWindowProc(hwnd, uMsg, wParam, lParam);
