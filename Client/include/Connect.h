@@ -6,6 +6,7 @@
 #include "../include/Threads.h"
 
 class GameManager;
+class CriticalSection;
 
 class Connect : public Threads
 {
@@ -20,6 +21,7 @@ private:
     int recvbuflen;
     HWND hWnd;
     GameManager& gameManager;
+    CRITICAL_SECTION m_critical;
 public:
     Connect(GameManager& gm);
     ~Connect();

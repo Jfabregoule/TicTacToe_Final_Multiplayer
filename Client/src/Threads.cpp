@@ -1,5 +1,6 @@
 #define NOMINMAX
 #include "../include/Threads.h"
+#include "../include/Connect.h"
 
 #include <SFML/Graphics.hpp>
 

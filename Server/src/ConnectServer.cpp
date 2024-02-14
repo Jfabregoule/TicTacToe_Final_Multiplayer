@@ -384,7 +384,7 @@ void ConnectServer::ExecuteThreadFunction() {
     while (true) {
         char recvbuf[DEFAULT_BUFLEN];
         int bytesRead = recv(serverSocket, recvbuf, DEFAULT_BUFLEN, 0);
-        std::cout << "Received : " << recvbuf << std::endl;
+        std::cout << "Received : " << bytesRead << std::endl;
         if (bytesRead > 0) {
             // Analyser la chaîne JSON reçue
             std::string jsonReceived(recvbuf, bytesRead);
@@ -392,7 +392,7 @@ void ConnectServer::ExecuteThreadFunction() {
             Json::Reader reader;
             bool parsingSuccessful = reader.parse(jsonReceived, root);
             if (!parsingSuccessful) {
-                std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+                //std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
                 return;
             }
 

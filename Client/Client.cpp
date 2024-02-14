@@ -10,8 +10,6 @@ int main()
 {
     
     GameManager        gameThread;
-    Connect            gameConnect(gameThread);
-    gameConnect.start();
     gameThread.Start();
     return 0;
 }

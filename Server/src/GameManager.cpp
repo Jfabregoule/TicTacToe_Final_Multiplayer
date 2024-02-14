@@ -30,6 +30,7 @@ GameManager::GameManager() {
 	m_previousClickState = false;
 
 	m_connectServer = new ConnectServer(*this);
+	m_connectServer->start();
 }
 
 /*

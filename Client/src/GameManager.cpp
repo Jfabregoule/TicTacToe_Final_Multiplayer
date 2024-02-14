@@ -44,9 +44,10 @@ GameManager::GameManager() {
 
 	m_music = new Music();
 
+	m_connect = new Connect(*this);
+	m_connect->start();
 	m_previousClickState = false;
 
-	m_connect = new Connect(*this);
 
 	if (!font.loadFromFile("rsrc/font/Caveat-Regular.ttf")) {
 		std::cerr << "Erreur lors du chargement de la police" << std::endl;
@@ -468,7 +469,6 @@ void GameManager::FormatAndSendMap() {
 	strcpy_s(jsonString, jsonOutput.size() + 1, jsonOutput.c_str());
 
 	formatedJson = jsonString;
-
 	sendResult = m_connect->Send(formatedJson);
 
 	delete[] jsonString;

@@ -6,19 +6,22 @@
 #include <string>
 #include "iostream"
 
+
 const char* DEFAULT_PORT = "21";
-const char* SERVER_IP_ADDR = "192.168.1.10";
+const char* SERVER_IP_ADDR = "10.1.144.31";
 #define DEFAULT_BUFLEN 512
 
 Connect::Connect(GameManager& gm) : gameManager(gm), ConnectSocket(INVALID_SOCKET) {
     recvbuf[DEFAULT_BUFLEN];
     recvbuflen = DEFAULT_BUFLEN;
-
+    InitializeCriticalSection(&m_critical);
 }
 
 Connect::~Connect() {
     CleanupSocket(ConnectSocket);
     CleanupWinsock();
+    DeleteCriticalSection(&m_critical);
+    
 }
 
 bool Connect::InitializeWinSock() {
@@ -27,6 +30,7 @@ bool Connect::InitializeWinSock() {
         printf("WSAStartup failed: %d\n", iResult);
         return false;
     }
+    else 
     return true;
 }
 
@@ -120,6 +124,7 @@ void Connect::CleanupWinsock() {
 }
 
 int Connect::initialize() {
+    printf("Initialize Begin\n");
     if (!InitializeWinSock()) {
         return 1;
     }
@@ -285,17 +290,18 @@ LRESULT CALLBACK Connect::ClientWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 }
 
 void Connect::EnterThreadFunction() {
-    std::cout << "grosse bite de cum" << std::endl;
     initialize();
 }
 
-
 void Connect::ExecuteThreadFunction() {
-    std::cout << "grosse bite de Sperme" << std::endl;
     while (true) {
+        EnterCriticalSection(&m_critical);
         char recvbuf[DEFAULT_BUFLEN];
         int bytesRead = recv(ConnectSocket, recvbuf, DEFAULT_BUFLEN, 0);
         if (bytesRead > 0) {
+            std::cout << bytesRead << std::endl;
+            return;
+
             // Analyser la chaîne JSON reçue
             std::string jsonReceived(recvbuf, bytesRead);
             Json::Value root;
@@ -312,7 +318,9 @@ void Connect::ExecuteThreadFunction() {
             if (root.isMember("Key") && root["Key"] == "Score")
                 UpdateScore(root);
             Sleep(1000);
+            
         }
+        LeaveCriticalSection(&m_critical);
     }
 }
 
