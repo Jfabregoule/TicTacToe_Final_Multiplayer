@@ -124,14 +124,14 @@ void GameManager::DrawBoard() {
 		{
 			switch (m_map[i][j])
 			{
-			case 'O':
+			case '0':
 				isEmpty = true;
 				break;
-			case 'X':
+			case 'x':
 				isEmpty = false;
 				currentSprite = *m_sprites.at(0);
 				break;
-			case '_':
+			case '.':
 				isEmpty = false;
 				currentSprite = *m_sprites.at(1);
 				break;
@@ -218,7 +218,7 @@ void GameManager::GenerateMap() {
 	{
 		for (j; j < 3; j++)
 		{
-			m_map[i][j] = 'O';
+			m_map[i][j] = '0';
 		}
 		m_map[i][j] = '\0';
 		j = 0;
@@ -570,9 +570,9 @@ void GameManager::Place() {
 
 	int i = -1, j = -1;
 	if (m_currentPlayer == 1)
-		c = 'X';
+		c = 'x';
 	else
-		c = '_';
+		c = '.';
 	if (position.x <= windowSize.x / 3)
 		j = 0;
 	else if (position.x >= windowSize.x / 3 and position.x <= windowSize.x / 3 * 2)
@@ -587,14 +587,14 @@ void GameManager::Place() {
 	else if (position.y >= windowSize.y / 3 * 2)
 		i = 2;
 
-	if (i != -1 && j != -1 && m_map[i][j] == 'O') {
+	if (i != -1 && j != -1 && m_map[i][j] == '0') {
 		toReplace = &m_map[i][j];
 		*toReplace = c;
 
-		//if (m_currentPlayer == 1)
-		//	m_currentPlayer = 2;
-		//else
-		//	m_currentPlayer = 1;
+		if (m_currentPlayer == 1)
+			m_currentPlayer = 2;
+		else
+			m_currentPlayer = 1;
 		FormatAndSendMap();
 	}
 }
@@ -602,14 +602,14 @@ void GameManager::Place() {
 void GameManager::EndCheck() {
 	// Check rows
 	for (int i = 0; i < 3; i++) {
-		if (m_map[i][0] == 'X' && m_map[i][1] == 'X' && m_map[i][2] == 'X') {
+		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
 			m_player1 = 0;
 			m_player2 = 0;
 			Generate();
 			Player1WinScreen();
 			return;
 		}
-		if (m_map[i][0] == '_' && m_map[i][1] == '_' && m_map[i][2] == '_') {
+		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
 			m_player1 = 0;
 			m_player2 = 0;
 			Generate();
@@ -620,14 +620,14 @@ void GameManager::EndCheck() {
 
 	// Check columns
 	for (int j = 0; j < 3; j++) {
-		if (m_map[0][j] == 'X' && m_map[1][j] == 'X' && m_map[2][j] == 'X') {
+		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
 			m_player1 = 0;
 			m_player2 = 0;
 			Generate();
 			Player1WinScreen();
 			return;
 		}
-		if (m_map[0][j] == '_' && m_map[1][j] == '_' && m_map[2][j] == '_') {
+		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
 			m_player1 = 0;
 			m_player2 = 0;
 			Generate();
@@ -637,16 +637,16 @@ void GameManager::EndCheck() {
 	}
 
 	// Check diagonals
-	if ((m_map[0][0] == 'X' && m_map[1][1] == 'X' && m_map[2][2] == 'X') ||
-		(m_map[0][2] == 'X' && m_map[1][1] == 'X' && m_map[2][0] == 'X')) {
+	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
+		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
 		m_player1 = 0;
 		m_player2 = 0;
 		Generate();
 		Player1WinScreen();
 		return;
 	}
-	if ((m_map[0][0] == '_' && m_map[1][1] == '_' && m_map[2][2] == '_') ||
-		(m_map[0][2] == '_' && m_map[1][1] == '_' && m_map[2][0] == '_')) {
+	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
+		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
 		m_player1 = 0;
 		m_player2 = 0;
 		Generate();
@@ -658,7 +658,7 @@ void GameManager::EndCheck() {
 	bool isTie = true;
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
-			if (m_map[i][j] == 'O') {
+			if (m_map[i][j] == '0') {
 				isTie = false;
 				break;
 			}
@@ -685,12 +685,13 @@ void GameManager::HandleEvents() {
 			if (event.type == Event::Closed)
 				CloseWindow();
 
-			if (currentClickState && !m_previousClickState && m_window->w_window->hasFocus())
+			if (currentClickState && !m_previousClickState && m_window->w_window->hasFocus()) {
 				if (m_currentPlayer == m_playerNumberSelf and m_player1 == 1 and m_player2 == 1 and !m_playerSpectator)
 				{
 					Place();
 					currentClickState = false;
 				}
+			}
 
 			m_previousClickState = currentClickState;
 		}
