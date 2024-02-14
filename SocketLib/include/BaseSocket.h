@@ -38,11 +38,11 @@ namespace SocketLibrary {
 		virtual void EventDispatcher(int fdEvent, SOCKET sender);
 		static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-		void Cleanup();
 
 	public:
 		virtual bool Initialize() = 0;
 		SOCKET* AccessSocket() { return &_socket; }
 		HWND* AccessHWND() { return &_window; }
+		void Cleanup();
 	};
 }

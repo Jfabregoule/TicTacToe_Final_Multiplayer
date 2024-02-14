@@ -125,6 +125,7 @@ private:
 
 	void		Place();
 	void		EndCheck();
+	void		SendScore(int winner);
 	void		HandleEvents();
 
 	friend ServerEventListener;

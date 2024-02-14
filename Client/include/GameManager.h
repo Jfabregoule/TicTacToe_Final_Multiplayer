@@ -75,7 +75,6 @@ private:
 
 public:
 
-	int							m_playerNumberSelf;
 	char						m_map[3][4];
 	int							m_currentTurn;
 	int							m_currentPlayer;
@@ -149,4 +148,5 @@ private:
 	void		enterNameScreen();
 	void		ChoosePlayer();
 	bool		PlayerVerification(int playerNumber);
+	int			Send(const char* buff);
 };

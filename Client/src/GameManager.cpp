@@ -515,6 +515,20 @@ void GameManager::FormatAndSendMap() {
 	}
 }
 
+int GameManager::Send(const char* buff) {
+	std::cout << "MAIS WHAAAAAAAAAAAAAAAAAAAAAAAAT ???" << std::endl;
+	int iResult = send(*m_Socket->AccessSocket(), buff, strlen(buff), 0);
+	if (iResult == SOCKET_ERROR) {
+		printf("send failed: %d\n", WSAGetLastError());
+		m_Socket(*m_Socket->AccessSocket());
+		CleanupWinsock();
+		return 1;
+	}
+	printf("Bytes Sent: %d\n", iResult);
+	//std::cout << "Sent : " << buff << std::endl;
+	return 0;
+}
+
 void GameManager::FormatAndSendInit() {
 	// Création d'un objet Json::Value
 	const char* formatedJson;

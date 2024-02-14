@@ -569,18 +569,47 @@ void GameManager::Place() {
 	}
 }
 
+void GameManager::SendScore(int winner) {
+	Json::Value root;
+
+
+
+	if (winner == 1)
+	{
+		m_players[m_player1Username] += 1;
+	}
+	else if (winner == 2)
+	{
+		m_players[m_player2Username] += 1;
+	}
+
+	root["Player1Score"] = m_players[m_player1Username];
+	root["Player2Score"] = m_players[m_player2Username];
+	root["Key"] = "Score";
+
+	std::string jsonToSend = root.toStyledString();
+
+	for (SOCKET clientSocket : m_Socket->Clients) {
+		int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
+		if (bytesSent == SOCKET_ERROR) {
+			std::cerr << "Error sending data to client" << std::endl;
+			// Gérer l'erreur, par exemple, fermer la connexion avec le client défaillant
+		}
+	}
+}
+
 void GameManager::EndCheck() {
 	// Check rows
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
 			Generate();
-			m_connectServer->SendScore(1);
+			SendScore(1);
 			UpdateClients();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
 			Generate();
-			m_connectServer->SendScore(2);
+			SendScore(2);
 			UpdateClients();
 			return;
 		}
@@ -590,13 +619,13 @@ void GameManager::EndCheck() {
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
 			Generate();
-			m_connectServer->SendScore(1);
+			SendScore(1);
 			UpdateClients();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
 			Generate();
-			m_connectServer->SendScore(2);
+			SendScore(2);
 			UpdateClients();
 			return;
 		}
@@ -606,14 +635,14 @@ void GameManager::EndCheck() {
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
 		Generate();
-		m_connectServer->SendScore(1);
+		SendScore(1);
 		UpdateClients();
 		return;
 	}
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
 		Generate();
-		m_connectServer->SendScore(2);
+		SendScore(2);
 		UpdateClients();
 		return;
 	}
@@ -631,7 +660,7 @@ void GameManager::EndCheck() {
 
 	if (isTie) {
 		Generate();
-		m_connectServer->SendScore(0);
+		SendScore(0);
 		UpdateClients();
 	}
 }
