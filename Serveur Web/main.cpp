@@ -52,7 +52,7 @@ int main()
 
     int bytes = 0;
 
-    std::string strMap = "";
+    std::string strMap = "000<br>000<br>000";
 
     while (true)
     {
@@ -106,6 +106,14 @@ int main()
         std::string response =
             "<html>"
             "<head>"
+            "<style>"
+            "h1 {"
+            "display: flex;"
+            "justify-content: center;"
+            "margin-top: 15%;"
+            "font-size: 800%;"
+            "}"
+            "</style>"
             "<script>"
             "setTimeout(function() { location.reload(); }, 1000);"
             "</script>"
