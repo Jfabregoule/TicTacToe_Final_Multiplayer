@@ -40,11 +40,11 @@ private:
 
 	sf::Font					font;
 
-	sf::Music* m_music;
+	sf::Music*					m_music;
 
 	// Time attributes
 
-	sf::Clock* m_Clock;
+	sf::Clock*					m_Clock;
 	float						m_deltaTime;
 	float						m_fpsLimit;
 	float						m_timeChange;

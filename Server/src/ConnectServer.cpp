@@ -11,6 +11,7 @@
 
 #define DEFAULT_PORT "21"
 #define DEFAULT_BUFLEN 512
+const char* SERVER_IP_ADDR = "10.1.144.29";
 
 ConnectServer::ConnectServer(GameManager& gm) : gameManager(gm), serverSocket(INVALID_SOCKET), hWnd(NULL) {
     clientSockets.clear();
@@ -203,6 +204,8 @@ bool ConnectServer::SendUpdateToServer() {
     int server_len;
     std::string mapString;
 
+    std::cout << "STRART" << std::endl;
+
     for (int i = 0; i < 3; ++i) {
         mapString += gameManager.m_map[i];
         if (i < 2) {
@@ -210,11 +213,14 @@ bool ConnectServer::SendUpdateToServer() {
         }
     }
 
+    std::cout << "1" << std::endl;
+
     // Initialize Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
         std::cerr << "WSAStartup failed\n";
         return false;
     }
+    std::cout << "2" << std::endl;
 
     // Create a socket
     wsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -223,11 +229,12 @@ bool ConnectServer::SendUpdateToServer() {
         WSACleanup();
         return false;
     }
+    std::cout << "3" << std::endl;
 
     // Define server address and port
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr("10.1.170.36"); // Adresse IP du serveur
-    server.sin_port = htons(7896); // Port du serveur
+    server.sin_addr.s_addr = inet_addr(SERVER_IP_ADDR); // Adresse IP du serveur
+    server.sin_port = htons(2579); // Port du serveur
     server_len = sizeof(server);
 
     // Connect to server
@@ -237,6 +244,8 @@ bool ConnectServer::SendUpdateToServer() {
         WSACleanup();
         return false;
     }
+
+    std::cout << "4" << std::endl;
 
     // Send update to server
 
@@ -248,9 +257,13 @@ bool ConnectServer::SendUpdateToServer() {
         return false;
     }
 
+    std::cout << "5" << std::endl;
+
     // Close socket and clean up Winsock
     closesocket(wsocket);
     WSACleanup();
+
+    std::cout << "END" << std::endl;
 
     return true;
 }
@@ -266,9 +279,9 @@ void ConnectServer::Update() {
     //std::cout << root << std::endl;
     std::string jsonToSend = root.toStyledString();
 
-    /*if (!SendUpdateToServer()) {
+    if (!SendUpdateToServer()) {
         std::cerr << "Erreur lors de l'envoi de la mise à jour au serveur web\n";
-    }*/
+    }
 
     for (SOCKET clientSocket : clientSockets) {
         int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #define DEFAULT_BUFLEN 512;
+const char* SERVER_IP_ADDR = "10.1.144.29";
 
 int main()
 {
@@ -35,8 +36,8 @@ int main()
     //bind socket to address
 
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr("10.1.144.21");
-    server.sin_port = htons(7896);
+    server.sin_addr.s_addr = inet_addr(SERVER_IP_ADDR);
+    server.sin_port = htons(2579);
     server_len = sizeof(server);
 
     if (bind(wsocket, (SOCKADDR*)&server, server_len) != 0) {
@@ -101,7 +102,6 @@ int main()
         }
 
         std::string serverMessage = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length:";
-        std::string myString(buff, length);
 
         std::string response =
             "<html>"
