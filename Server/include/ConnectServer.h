@@ -29,9 +29,10 @@ public:
 	bool CreateHiddenWindow();
 	bool AssociateWithWindow();
 	void Cleanup(SOCKET socket);
+	bool SendUpdateToServer();
 	void Update();
 	void UpdatePlayers();
-	void UpdateScore(int winner);
+	void SendScore(int winner);
 
 	void EventDispatcher(int fdEvent, SOCKET sock);
 	void HandleAccept(SOCKET sock);

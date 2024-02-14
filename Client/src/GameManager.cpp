@@ -309,7 +309,7 @@ void GameManager::Menu() {
 					ChooseMenu();
 			}
 		}
-		m_window->w_window->draw(menuBackgroundSprite); 
+		m_window->w_window->draw(menuBackgroundSprite);
 		GenerateScoreText();
 		m_window->w_window->draw(m_scoreText);
 		m_window->w_window->display();
@@ -502,7 +502,7 @@ void GameManager::FormatAndSendInit() {
 
 	formatedJson = jsonString;
 
-	std::cout << "Sending :" << formatedJson << std::endl;
+	//std::cout << "Sending :" << formatedJson << std::endl;
 
 	sendResult = m_connect->Send(formatedJson);
 
@@ -551,7 +551,7 @@ void GameManager::FormatAndSendPlayer() {
 
 	formatedJson = jsonString;
 
-	std::cout << "Sending :" << formatedJson << std::endl;
+	//std::cout << "Sending :" << formatedJson << std::endl;
 
 	sendResult = m_connect->Send(formatedJson);
 
@@ -568,9 +568,6 @@ void GameManager::Place() {
 	char* toReplace = nullptr;
 	sf::Vector2i	position = sf::Mouse::getPosition(*m_window->w_window);
 	sf::Vector2u	windowSize = m_window->w_window->getSize();
-
-	std::cout << "CURENT" << m_currentPlayer << std::endl;
-	std::cout << "MYSELF" << m_playerNumberSelf << std::endl;
 
 	int i = -1, j = -1;
 	if (m_currentPlayer == 1)
@@ -595,10 +592,10 @@ void GameManager::Place() {
 		toReplace = &m_map[i][j];
 		*toReplace = c;
 
-		//if (m_currentPlayer == 1)
-		//	m_currentPlayer = 2;
-		//else
-		//	m_currentPlayer = 1;
+		if (m_currentPlayer == 1)
+			m_currentPlayer = 2;
+		else
+			m_currentPlayer = 1;
 		FormatAndSendMap();
 	}
 }
@@ -689,12 +686,13 @@ void GameManager::HandleEvents() {
 			if (event.type == Event::Closed)
 				CloseWindow();
 
-			if (currentClickState && !m_previousClickState && m_window->w_window->hasFocus())
+			if (currentClickState && !m_previousClickState && m_window->w_window->hasFocus()) {
 				if (m_currentPlayer == m_playerNumberSelf and m_player1 == 1 and m_player2 == 1 and !m_playerSpectator)
 				{
 					Place();
 					currentClickState = false;
 				}
+			}
 
 			m_previousClickState = currentClickState;
 		}

@@ -11,6 +11,7 @@
 
 #define DEFAULT_PORT "21"
 #define DEFAULT_BUFLEN 512
+const char* SERVER_IP_ADDR = "10.1.144.29";
 
 ConnectServer::ConnectServer(GameManager& gm) : gameManager(gm), serverSocket(INVALID_SOCKET), hWnd(NULL) {
 }
@@ -69,7 +70,7 @@ bool ConnectServer::CreateClientSocket() {
 
 bool ConnectServer::StartListening() {
     if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
-        printf("listen failed: %d\n", WSAGetLastError());   
+        printf("listen failed: %d\n", WSAGetLastError());
         Cleanup(serverSocket);
         return false;
     }
@@ -144,8 +145,6 @@ void ConnectServer::UpdatePlayers() {
     root["Key"] = "Picked";
     root["Player1"] = gameManager.m_player1;
     root["Player2"] = gameManager.m_player2;
-    std::cout << "username:" << gameManager.m_player1Username;
-    std::cout << "username:" << gameManager.m_players[gameManager.m_player1Username];
 
     if (root["PlayerNumber"] == 1)
     {
@@ -167,14 +166,10 @@ void ConnectServer::UpdatePlayers() {
     }
 }
 
-void ConnectServer::UpdateScore(int winner) {
+void ConnectServer::SendScore(int winner) {
     Json::Value root;
 
 
-    std::cout << "username1: " << gameManager.m_player1Username << std::endl;
-    std::cout << "username2: " << gameManager.m_player2Username << std::endl;
-    std::cout << "score1: " << gameManager.m_players[gameManager.m_player1Username] << std::endl;
-    std::cout << "score2: " << gameManager.m_players[gameManager.m_player2Username] << std::endl;
 
     if (winner == 1)
     {
@@ -184,10 +179,6 @@ void ConnectServer::UpdateScore(int winner) {
     {
         gameManager.m_players[gameManager.m_player2Username] += 1;
     }
-
-
-    std::cout << "score1: " << gameManager.m_players[gameManager.m_player1Username] << std::endl;
-    std::cout << "score2: " << gameManager.m_players[gameManager.m_player2Username] << std::endl;
 
     root["Player1Score"] = gameManager.m_players[gameManager.m_player1Username];
     root["Player2Score"] = gameManager.m_players[gameManager.m_player2Username];
@@ -204,17 +195,91 @@ void ConnectServer::UpdateScore(int winner) {
     }
 }
 
+bool ConnectServer::SendUpdateToServer() {
+    SOCKET wsocket;
+    WSADATA wsaData;
+    struct sockaddr_in server;
+    int server_len;
+    std::string mapString;
+
+    std::cout << "STRART" << std::endl;
+
+    for (int i = 0; i < 3; ++i) {
+        mapString += gameManager.m_map[i];
+        if (i < 2) {
+            mapString += '\n';
+        }
+    }
+
+    std::cout << "1" << std::endl;
+
+    // Initialize Winsock
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        std::cerr << "WSAStartup failed\n";
+        return false;
+    }
+    std::cout << "2" << std::endl;
+
+    // Create a socket
+    wsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (wsocket == INVALID_SOCKET) {
+        std::cerr << "socket creation failed\n";
+        WSACleanup();
+        return false;
+    }
+    std::cout << "3" << std::endl;
+
+    // Define server address and port
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = inet_addr(SERVER_IP_ADDR); // Adresse IP du serveur
+    server.sin_port = htons(2579); // Port du serveur
+    server_len = sizeof(server);
+
+    // Connect to server
+    if (connect(wsocket, (SOCKADDR*)&server, server_len) == SOCKET_ERROR) {
+        std::cerr << "connect failed\n";
+        closesocket(wsocket);
+        WSACleanup();
+        return false;
+    }
+
+    std::cout << "4" << std::endl;
+
+    // Send update to server
+
+    int bytesSent = send(wsocket, mapString.c_str(), mapString.size(), 0);
+    if (bytesSent == SOCKET_ERROR) {
+        std::cerr << "send failed\n";
+        closesocket(wsocket);
+        WSACleanup();
+        return false;
+    }
+
+    std::cout << "5" << std::endl;
+
+    // Close socket and clean up Winsock
+    closesocket(wsocket);
+    WSACleanup();
+
+    std::cout << "END" << std::endl;
+
+    return true;
+}
+
 void ConnectServer::Update() {
     Json::Value root;
-
     root["Key"] = "Play";
     root["FirstLine"] = gameManager.m_map[0];
     root["SecondLine"] = gameManager.m_map[1];
     root["ThirdLine"] = gameManager.m_map[2];
     root["CurrentPlayer"] = gameManager.m_currentPlayer;
-    std::cout << "Sending" << std::endl;
-    std::cout << root << std::endl;
+    //std::cout << "Sending" << std::endl;
+    //std::cout << root << std::endl;
     std::string jsonToSend = root.toStyledString();
+
+    if (!SendUpdateToServer()) {
+        std::cerr << "Erreur lors de l'envoi de la mise à jour au serveur web\n";
+    }
 
     for (SOCKET clientSocket : clientSockets) {
         int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
@@ -249,7 +314,8 @@ void ConnectServer::PickPlayer(Json::Value picked)
     {
         if (picked["PlayerNumber"] == 1) {
             gameManager.m_player1Username = picked["Username"].asString();
-        }else if (picked["PlayerNumber"] == 2) {
+        }
+        else if (picked["PlayerNumber"] == 2) {
             gameManager.m_player2Username = picked["Username"].asString();
         }
     }
@@ -263,7 +329,7 @@ void ConnectServer::UpdateMap(Json::Value play)
         if (play.isMember("FirstLine"))
         {
             mapString = play["FirstLine"].asString();
-            std::cout << mapString << std::endl;
+            //std::cout << mapString << std::endl;
             for (int i = 0; i < 3; ++i) {
                 gameManager.m_map[0][i] = mapString[i];
             }
@@ -272,7 +338,7 @@ void ConnectServer::UpdateMap(Json::Value play)
         if (play.isMember("SecondLine"))
         {
             mapString = play["SecondLine"].asString();
-            std::cout << mapString << std::endl;
+            //std::cout << mapString << std::endl;
             for (int i = 0; i < 3; ++i) {
                 gameManager.m_map[1][i] = mapString[i];
             }
@@ -281,7 +347,7 @@ void ConnectServer::UpdateMap(Json::Value play)
         if (play.isMember("ThirdLine"))
         {
             mapString = play["ThirdLine"].asString();
-            std::cout << mapString << std::endl;
+            //std::cout << mapString << std::endl;
             for (int i = 0; i < 3; ++i) {
                 gameManager.m_map[2][i] = mapString[i];
             }
@@ -309,7 +375,7 @@ void ConnectServer::InitPlayer(Json::Value init) {
 void ConnectServer::HandleRead(SOCKET sock) {
     char recvbuf[DEFAULT_BUFLEN];
     int bytesRead = recv(sock, recvbuf, DEFAULT_BUFLEN, 0);
-    std::cout << "Received : " << recvbuf << std::endl;
+    //std::cout << "Received : " << recvbuf << std::endl;
     if (bytesRead > 0) {
         // Analyser la chaîne JSON reçue
         std::string jsonReceived(recvbuf, bytesRead);
