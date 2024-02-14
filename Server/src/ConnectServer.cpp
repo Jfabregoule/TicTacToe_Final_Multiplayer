@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "../include/ConnectServer.h"
-#include "../thirdparties/jsoncpp/include/json/json.h"
+#include <json/json.h>
 #include "../include/GameManager.h"
 
 #define DEFAULT_PORT "21"

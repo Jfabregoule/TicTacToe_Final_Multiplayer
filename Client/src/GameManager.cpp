@@ -1,16 +1,52 @@
 #include <iostream>
 #include <fstream>
 #include <SFML/Graphics.hpp>
+#include <SocketLib.h>
 
 #include "../include/GameManager.h"
 #include "../include/GameWindow.h"
-#include "../thirdparties/jsoncpp/include/json/json.h"
-#include "../include/Connect.h"
+#include <json/json.h>
 
 const float INPUT_BLOCK_TIME = 0.8f;
 
 #define DEFAULT_BUFLEN 512
 
+// EVENT LISTENER
+
+ClientEventListener::ClientEventListener(GameManager* gameManager)
+	: _gameManager(gameManager)
+{}
+
+ClientEventListener::~ClientEventListener()
+{}
+
+void ClientEventListener::HandleRead(SOCKET sender) {
+	char recvbuf[DEFAULT_BUFLEN];
+	int bytesRead = recv(sender, recvbuf, DEFAULT_BUFLEN, 0);
+	//std::cout << "Received : " << recvbuf << std::endl;
+	if (bytesRead > 0) {
+		// Analyser la chaîne JSON reçue
+		std::string jsonReceived(recvbuf, bytesRead);
+		Json::Value root;
+		Json::Reader reader;
+		bool parsingSuccessful = reader.parse(jsonReceived, root);
+		if (!parsingSuccessful) {
+			// std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+			return;
+		}
+
+		if (root.isMember("Key") && root["Key"] == "Picked")
+			_gameManager->PickPlayer(root);
+		if (root.isMember("Key") && root["Key"] == "Play")
+			_gameManager->UpdateMap(root);
+	}
+}
+
+void ClientEventListener::HandleClose(SOCKET sender) {
+	closesocket(sender);
+}
+
+// GAME MANAGER
 
 GameManager::GameManager() {
 	//std::cout << "CLIENT" << std::endl;
@@ -45,7 +81,8 @@ GameManager::GameManager() {
 
 	m_previousClickState = false;
 
-	m_connect = new Connect(*this);
+	m_eventListener = new ClientEventListener(this);
+	m_Socket = new SocketLibrary::ClientSocket("10.1.144.30", "21", m_eventListener);
 
 	if (!font.loadFromFile("rsrc/font/Caveat-Regular.ttf")) {
 		std::cerr << "Erreur lors du chargement de la police" << std::endl;
@@ -501,13 +538,11 @@ void GameManager::FormatAndSendInit() {
 
 	formatedJson = jsonString;
 
-	//std::cout << "Sending :" << formatedJson << std::endl;
-
-	sendResult = m_connect->Send(formatedJson);
+	sendResult = m_Socket->Send(formatedJson);
 
 	delete[] jsonString;
 
-	if (sendResult != 0) {
+	if (sendResult == SOCKET_ERROR) {
 		std::cerr << "Error sending JSON to client." << std::endl;
 		// Gérer l'erreur de manière appropriée dans votre application
 	}
@@ -549,15 +584,12 @@ void GameManager::FormatAndSendPlayer() {
 	strcpy_s(jsonString, jsonOutput.size() + 1, jsonOutput.c_str());
 
 	formatedJson = jsonString;
-
-	//std::cout << "Sending :" << formatedJson << std::endl;
-
-	sendResult = m_connect->Send(formatedJson);
+	sendResult = m_Socket->Send(formatedJson);
 
 	delete[] jsonString;
 
-	if (sendResult != 0) {
-		std::cerr << "Error sending JSON to client." << std::endl;
+	if (sendResult == SOCKET_ERROR) {
+		std::cerr << "Error sending JSON to client with error: " << WSAGetLastError() << std::endl;
 		// Gérer l'erreur de manière appropriée dans votre application
 	}
 }
@@ -698,9 +730,57 @@ void GameManager::HandleEvents() {
 	}
 }
 
+void GameManager::PickPlayer(Json::Value picked) {
+	if (picked.isMember("Player1"))
+		if (picked["Player1"] == 1) {
+			m_player1 = 1;
+			std::cout << "mPlayer1 defined !" << std::endl;
+		}
+	if (picked.isMember("Player2"))
+		if (picked["Player2"] == 1)
+			m_player2 = 1;
+}
+
+void GameManager::UpdateMap(Json::Value play) {
+	if (play.isMember("FirstLine") || play.isMember("SecondLine") || play.isMember("ThirdLine")) {
+		std::string mapString;
+		if (play.isMember("FirstLine"))
+		{
+			mapString = play["FirstLine"].asString();
+			//std::cout << mapString << std::endl;
+			for (int i = 0; i < 3; ++i) {
+				m_map[0][i] = mapString[i];
+			}
+			m_map[0][3] = '\0';
+		}
+		if (play.isMember("SecondLine"))
+		{
+			mapString = play["SecondLine"].asString();
+			//std::cout << mapString << std::endl;
+			for (int i = 0; i < 3; ++i) {
+				m_map[1][i] = mapString[i];
+			}
+			m_map[1][3] = '\0';
+		}
+		if (play.isMember("ThirdLine"))
+		{
+			mapString = play["ThirdLine"].asString();
+			//std::cout << mapString << std::endl;
+			for (int i = 0; i < 3; ++i) {
+				m_map[2][i] = mapString[i];
+			}
+			m_map[2][3] = '\0';
+		}
+		if (play.isMember("CurrentPlayer"))
+		{
+			m_currentPlayer = play["CurrentPlayer"].asInt();
+		}
+	}
+}
+
 void GameManager::Start() {
 	float	fps = 0;
-
+	m_Socket->Initialize();
 	Generate();
 	//Menu();
 	//PlayMusic("rsrc/music/theme.ogg");
@@ -891,6 +971,8 @@ bool GameManager::PlayerVerification(int playerNumber) {
 */
 
 GameManager::~GameManager() {
+	delete m_Socket;
+	delete m_eventListener;
 	delete m_window;
 	delete m_icon;
 	m_music->stop();

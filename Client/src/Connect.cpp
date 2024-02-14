@@ -258,6 +258,7 @@ void Connect::EventDispatcher(int fdEvent, SOCKET sock) {
 }
 
 int Connect::Send(const char* buff) {
+    std::cout << "MAIS WHAAAAAAAAAAAAAAAAAAAAAAAAT ???" << std::endl;
     iResult = send(ConnectSocket, buff, strlen(buff), 0);
     if (iResult == SOCKET_ERROR) {
         printf("send failed: %d\n", WSAGetLastError());

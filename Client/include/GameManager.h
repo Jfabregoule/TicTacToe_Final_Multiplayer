@@ -2,10 +2,24 @@
 
 class GameWindow;
 class Connect;
+class GameManager;
 
 #include <SFML/Audio/Music.hpp>
 #include <SFML/Graphics.hpp>
-#include "../thirdparties/jsoncpp/include/json/json.h"
+#include <SocketLib.h>
+#include <json/json.h>
+
+class ClientEventListener : public SocketLibrary::EventListener {
+private:
+	GameManager* _gameManager;
+
+public:
+	ClientEventListener(GameManager* gameManager);
+	~ClientEventListener();
+
+	void HandleRead(SOCKET sender) override;
+	void HandleClose(SOCKET sender) override;
+};
 
 class GameManager
 {
@@ -14,31 +28,32 @@ private:
 
 	// Window attributes
 
-	GameWindow*					m_window;
-	sf::Image*					m_icon;
+	GameWindow*						m_window;
+	sf::Image*						m_icon;
 
 	// Game attributes
 
-	bool						m_running;
+	bool							m_running;
 
-	bool						m_previousClickState;
+	bool							m_previousClickState;
 
-	bool						m_menu;
-	bool						m_endScreen;
-	bool						m_choiceScreen;
-	bool						m_username;
+	bool							m_menu;
+	bool							m_endScreen;
+	bool							m_choiceScreen;
+	bool							m_username;
 
-	int							m_playerNumberEnemy;
+	int								m_playerNumberSelf;
+	int								m_playerNumberEnemy;
 
-	bool						m_playerSpectator;
+	bool							m_playerSpectator;
 
-	std::vector<sf::Text>		m_textList;
+	std::vector<sf::Text>			m_textList;
 
 	sf::Text					m_scoreText;
 
 	std::string					username;
 
-	sf::Font					font;
+	sf::Font						font;
 
 	sf::Music*					m_music;
 
@@ -51,11 +66,12 @@ private:
 
 	// Textures attributes
 
-	std::vector<sf::Sprite*>	m_sprites;
+	std::vector<sf::Sprite*>		m_sprites;
 
 	// Connexion attributes
 
-	Connect*					m_connect;
+	ClientEventListener*			m_eventListener;
+	SocketLibrary::ClientSocket*	m_Socket;
 
 public:
 
@@ -65,8 +81,8 @@ public:
 	int							m_currentPlayer;
 	int							m_score;
 
-	int							m_player1;
-	int							m_player2;
+	int								m_player1;
+	int								m_player2;
 
 	// Constructor/Destructor
 
@@ -76,6 +92,8 @@ public:
 	// Called in main
 
 	void		Start();
+	void		PickPlayer(Json::Value picked);
+	void		UpdateMap(Json::Value play);
 
 private:
 
@@ -127,9 +145,6 @@ private:
 	void		HandleEvents();
 
 	// Multiplayer Methods
-	char*		convertJsonToString(const Json::Value& json, std::string key);
-	Json::Value convertStringToJson(const std::string& jsonString);
-	void		convertJsonToMap(Json::Value& json);
 	void		ChoicePlayerScreen();
 	void		enterNameScreen();
 	void		ChoosePlayer();
