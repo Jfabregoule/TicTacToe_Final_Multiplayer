@@ -5,6 +5,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "../thirdparties/jsoncpp/include/json/json.h"
+#include "../include/WebServer.h"
 #include "Threads.h"
 
 
@@ -14,6 +15,7 @@ class ConnectServer : public Threads
 {
 private:
 	GameManager&				gameManager;
+	WebServer*					webserver;
 	SOCKET						serverSocket;
 	HWND						hWnd;
 	std::vector<SOCKET>			clientSockets;

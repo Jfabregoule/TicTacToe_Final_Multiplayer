@@ -11,9 +11,10 @@
 
 #define DEFAULT_PORT "21"
 #define DEFAULT_BUFLEN 512
-const char* SERVER_IP_ADDR = "10.1.144.29";
+const char* SERVER_IP_ADDR = "10.1.144.28";
 
 ConnectServer::ConnectServer(GameManager& gm) : gameManager(gm), serverSocket(INVALID_SOCKET), hWnd(NULL) {
+    
 }
 
 ConnectServer::~ConnectServer() {
@@ -197,11 +198,16 @@ void ConnectServer::SendScore(int winner) {
 }
 
 bool ConnectServer::SendUpdateToServer() {
+
+    webserver = new WebServer();
+
     SOCKET wsocket;
     WSADATA wsaData;
     struct sockaddr_in server;
     int server_len;
     std::string mapString;
+
+    //webserver->MapRefresh(mapString);
 
     std::cout << "STRART" << std::endl;
 
