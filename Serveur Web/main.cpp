@@ -49,7 +49,7 @@ int main()
         std::cout << "Could not start listening \n";
     }
 
-    std::cout << "Listening on 10.1.170.36:8080 \n";
+    std::cout << "Listening on " << SERVER_IP_ADDR << std::endl;
 
     int bytes = 0;
 

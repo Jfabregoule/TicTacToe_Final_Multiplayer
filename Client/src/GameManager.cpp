@@ -512,7 +512,7 @@ void GameManager::FormatAndSendMap() {
 
 	delete[] jsonString;
 
-	if (sendResult != 0) {
+	if (sendResult == SOCKET_ERROR) {
 		std::cerr << "Error sending JSON to client." << std::endl;
 		// Gérer l'erreur de manière appropriée dans votre application
 	}

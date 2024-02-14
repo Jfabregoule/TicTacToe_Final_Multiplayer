@@ -10,6 +10,7 @@
 #include <json/json.h>
 
 #define DEFAULT_BUFLEN 512
+#define SERVER_IP_ADDR "192.168.1.18"
 const float INPUT_BLOCK_TIME = 0.8f;
 
 // EVENT LISTENER
@@ -500,6 +501,66 @@ void GameManager::InitPlayer(Json::Value init) {
 	}
 }
 
+bool GameManager::SendUpdateToServer()
+{
+	SOCKET wsocket;
+	WSADATA wsaData;
+	struct sockaddr_in server;
+	int server_len;
+	std::string mapString;
+
+	for (int i = 0; i < 3; ++i) {
+		mapString += m_map[i];
+		if (i < 2) {
+			mapString += '\n';
+		}
+	}
+
+	// Initialize Winsock
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+		std::cerr << "WSAStartup failed\n";
+		return false;
+	}
+	
+	// Create a socket
+	wsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (wsocket == INVALID_SOCKET) {
+		std::cerr << "socket creation failed\n";
+		WSACleanup();
+		return false;
+	}
+
+	// Define server address and port
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = inet_addr(SERVER_IP_ADDR); // Adresse IP du serveur
+	server.sin_port = htons(2579); // Port du serveur
+	server_len = sizeof(server);
+
+	// Connect to server
+	if (connect(wsocket, (SOCKADDR*)&server, server_len) == SOCKET_ERROR) {
+		std::cerr << "connect failed\n";
+		closesocket(wsocket);
+		WSACleanup();
+		return false;
+	}
+
+	// Send update to server
+
+	int bytesSent = send(wsocket, mapString.c_str(), mapString.size(), 0);
+	if (bytesSent == SOCKET_ERROR) {
+		std::cerr << "send failed\n";
+		closesocket(wsocket);
+		WSACleanup();
+		return false;
+	}
+
+	// Close socket and clean up Winsock
+	closesocket(wsocket);
+	WSACleanup();
+
+	return true;
+}
+
 void GameManager::UpdateClients() {
 	Json::Value root;
 	root["Key"] = "Play";
@@ -510,6 +571,10 @@ void GameManager::UpdateClients() {
 	std::cout << "Sending" << std::endl;
 	std::cout << root << std::endl;
 	std::string jsonToSend = root.toStyledString();
+
+	if (!SendUpdateToServer()) {
+		std::cerr << "Erreur lors de l'envoi de la mise à jour au serveur web\n";
+	}
 
 	for (SOCKET clientSocket : m_Socket->Clients) {
 		int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);

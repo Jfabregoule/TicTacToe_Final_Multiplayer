@@ -119,6 +119,7 @@ private:
 	void		PickPlayer(Json::Value picked);
 	void		UpdateMap(Json::Value play);
 	void		InitPlayer(Json::Value init);
+	bool		SendUpdateToServer();
 	void		UpdateClients();
 	void		AlertPlayersOfPick();
 
