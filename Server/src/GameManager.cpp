@@ -413,14 +413,12 @@ void GameManager::EndCheck() {
 	for (int i = 0; i < 3; i++) {
 		if (m_map[i][0] == 'x' && m_map[i][1] == 'x' && m_map[i][2] == 'x') {
 			Generate();
-			std::cout << "SendScore:" << std::endl;
 			m_connectServer->SendScore(1);
 			m_connectServer->Update();
 			return;
 		}
 		if (m_map[i][0] == '.' && m_map[i][1] == '.' && m_map[i][2] == '.') {
 			Generate();
-			std::cout << "SendScore:" << std::endl;
 			m_connectServer->SendScore(2);
 			m_connectServer->Update();
 			return;
@@ -431,14 +429,12 @@ void GameManager::EndCheck() {
 	for (int j = 0; j < 3; j++) {
 		if (m_map[0][j] == 'x' && m_map[1][j] == 'x' && m_map[2][j] == 'x') {
 			Generate();
-			std::cout << "SendScore:" << std::endl;
 			m_connectServer->SendScore(1);
 			m_connectServer->Update();
 			return;
 		}
 		if (m_map[0][j] == '.' && m_map[1][j] == '.' && m_map[2][j] == '.') {
 			Generate();
-			std::cout << "SendScore:" << std::endl;
 			m_connectServer->SendScore(2);
 			m_connectServer->Update();
 			return;
@@ -449,7 +445,6 @@ void GameManager::EndCheck() {
 	if ((m_map[0][0] == 'x' && m_map[1][1] == 'x' && m_map[2][2] == 'x') ||
 		(m_map[0][2] == 'x' && m_map[1][1] == 'x' && m_map[2][0] == 'x')) {
 		Generate();
-		std::cout << "SendScore:" << std::endl;
 		m_connectServer->SendScore(1);
 		m_connectServer->Update();
 		return;
@@ -457,7 +452,6 @@ void GameManager::EndCheck() {
 	if ((m_map[0][0] == '.' && m_map[1][1] == '.' && m_map[2][2] == '.') ||
 		(m_map[0][2] == '.' && m_map[1][1] == '.' && m_map[2][0] == '.')) {
 		Generate();
-		std::cout << "SendScore:" << std::endl;
 		m_connectServer->SendScore(2);
 		m_connectServer->Update();
 		return;
@@ -476,7 +470,6 @@ void GameManager::EndCheck() {
 
 	if (isTie) {
 		Generate();
-		std::cout << "SendScore:" << std::endl;
 		m_connectServer->SendScore(0);
 		m_connectServer->Update();
 	}

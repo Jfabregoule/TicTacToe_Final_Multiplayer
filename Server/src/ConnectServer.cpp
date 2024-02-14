@@ -257,7 +257,6 @@ bool ConnectServer::SendUpdateToServer() {
 
 void ConnectServer::Update() {
     Json::Value root;
-
     root["Key"] = "Play";
     root["FirstLine"] = gameManager.m_map[0];
     root["SecondLine"] = gameManager.m_map[1];
@@ -267,9 +266,9 @@ void ConnectServer::Update() {
     //std::cout << root << std::endl;
     std::string jsonToSend = root.toStyledString();
 
-    if (!SendUpdateToServer()) {
+    /*if (!SendUpdateToServer()) {
         std::cerr << "Erreur lors de l'envoi de la mise à jour au serveur web\n";
-    }
+    }*/
 
     for (SOCKET clientSocket : clientSockets) {
         int bytesSent = send(clientSocket, jsonToSend.c_str(), jsonToSend.length(), 0);
