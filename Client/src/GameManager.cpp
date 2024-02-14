@@ -10,6 +10,7 @@
 const float INPUT_BLOCK_TIME = 0.8f;
 
 #define DEFAULT_BUFLEN 512
+#define SERVER_IP_ADDR "192.168.1.18"
 
 // EVENT LISTENER
 
@@ -39,6 +40,8 @@ void ClientEventListener::HandleRead(SOCKET sender) {
 			_gameManager->PickPlayer(root);
 		if (root.isMember("Key") && root["Key"] == "Play")
 			_gameManager->UpdateMap(root);
+		if (root.isMember("Key") && root["Key"] == "Score")
+			_gameManager->UpdateScore(root);
 	}
 }
 
@@ -82,7 +85,7 @@ GameManager::GameManager() {
 	m_previousClickState = false;
 
 	m_eventListener = new ClientEventListener(this);
-	m_Socket = new SocketLibrary::ClientSocket("10.1.144.30", "21", m_eventListener);
+	m_Socket = new SocketLibrary::ClientSocket(SERVER_IP_ADDR, "21", m_eventListener);
 
 	if (!font.loadFromFile("rsrc/font/Caveat-Regular.ttf")) {
 		std::cerr << "Erreur lors du chargement de la police" << std::endl;
@@ -505,7 +508,7 @@ void GameManager::FormatAndSendMap() {
 
 	formatedJson = jsonString;
 
-	sendResult = m_connect->Send(formatedJson);
+	sendResult = m_Socket->Send(formatedJson);
 
 	delete[] jsonString;
 
@@ -515,18 +518,15 @@ void GameManager::FormatAndSendMap() {
 	}
 }
 
-int GameManager::Send(const char* buff) {
-	std::cout << "MAIS WHAAAAAAAAAAAAAAAAAAAAAAAAT ???" << std::endl;
-	int iResult = send(*m_Socket->AccessSocket(), buff, strlen(buff), 0);
-	if (iResult == SOCKET_ERROR) {
-		printf("send failed: %d\n", WSAGetLastError());
-		m_Socket(*m_Socket->AccessSocket());
-		CleanupWinsock();
-		return 1;
+void GameManager::UpdateScore(Json::Value score) {
+	if (m_playerNumberSelf == 1)
+	{
+		m_score = score["Player1Score"].asInt();
 	}
-	printf("Bytes Sent: %d\n", iResult);
-	//std::cout << "Sent : " << buff << std::endl;
-	return 0;
+	else if (m_playerNumberSelf == 2)
+	{
+		m_score = score["Player2Score"].asInt();
+	}
 }
 
 void GameManager::FormatAndSendInit() {
@@ -748,7 +748,6 @@ void GameManager::PickPlayer(Json::Value picked) {
 	if (picked.isMember("Player1"))
 		if (picked["Player1"] == 1) {
 			m_player1 = 1;
-			std::cout << "mPlayer1 defined !" << std::endl;
 		}
 	if (picked.isMember("Player2"))
 		if (picked["Player2"] == 1)

@@ -143,13 +143,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\Connect.h" />
     <ClInclude Include="include\GameManager.h" />
     <ClInclude Include="include\GameWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
-    <ClCompile Include="src\Connect.cpp" />
     <ClCompile Include="src\GameManager.cpp" />
     <ClCompile Include="src\GameWindow.cpp" />
     <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_reader.cpp" />

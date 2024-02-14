@@ -24,9 +24,6 @@
     <ClInclude Include="include\GameWindow.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="include\Connect.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GameManager.cpp">
@@ -46,9 +43,6 @@
     </ClCompile>
     <ClCompile Include="thirdparties\jsoncpp\src\lib_json\json_writer.cpp">
       <Filter>ThirdParties</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Connect.cpp">
-      <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

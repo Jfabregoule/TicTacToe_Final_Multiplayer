@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #define DEFAULT_BUFLEN 512;
-const char* SERVER_IP_ADDR = "10.1.144.29";
+const char* SERVER_IP_ADDR = "192.168.1.18";
 
 int main()
 {

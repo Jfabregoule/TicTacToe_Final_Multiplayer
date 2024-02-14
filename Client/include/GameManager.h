@@ -93,6 +93,7 @@ public:
 	void		Start();
 	void		PickPlayer(Json::Value picked);
 	void		UpdateMap(Json::Value play);
+	void		UpdateScore(Json::Value score);
 
 private:
 
@@ -132,7 +133,6 @@ private:
 	void		TieScreen();
 
 	// Connexion related
-
 	void		FormatAndSendMap();
 	void		FormatAndSendPlayer();
 	void		FormatAndSendInit();
@@ -148,5 +148,4 @@ private:
 	void		enterNameScreen();
 	void		ChoosePlayer();
 	bool		PlayerVerification(int playerNumber);
-	int			Send(const char* buff);
 };

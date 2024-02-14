@@ -8,7 +8,6 @@
 #include "../include/GameManager.h"
 #include "../include/GameWindow.h"
 #include <json/json.h>
-#include "../include/ConnectServer.h"
 
 #define DEFAULT_BUFLEN 512
 const float INPUT_BLOCK_TIME = 0.8f;
@@ -57,6 +56,8 @@ void ServerEventListener::HandleRead(SOCKET sender) {
 			_gameManager->PickPlayer(root);
 		if (root.isMember("Key") && root["Key"] == "Play")
 			_gameManager->UpdateMap(root);
+		if (root.isMember("Key") && root["Key"] == "Init")
+			_gameManager->InitPlayer(root);
 	}
 }
 
@@ -489,6 +490,14 @@ void GameManager::UpdateMap(Json::Value play) {
 		}
 	}
 	UpdateClients();
+}
+
+void GameManager::InitPlayer(Json::Value init) {
+	if (init.isMember("Username")) {
+		if (m_players.find(init["Username"].asString()) == m_players.end()) {
+			m_players[init["Username"].asString()] = 0;
+		}
+	}
 }
 
 void GameManager::UpdateClients() {
