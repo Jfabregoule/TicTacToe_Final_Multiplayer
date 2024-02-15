@@ -6,7 +6,6 @@
 #include <string>
 #include "iostream"
 
-
 const char* DEFAULT_PORT = "21";
 const char* SERVER_IP_ADDR = "10.1.144.28";
 #define DEFAULT_BUFLEN 512
