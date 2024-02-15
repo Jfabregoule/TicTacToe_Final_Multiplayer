@@ -7,7 +7,7 @@
 #include "iostream"
 
 const char* DEFAULT_PORT = "21";
-const char* SERVER_IP_ADDR = "10.1.144.28";
+const char* SERVER_IP_ADDR = "192.168.1.136";
 #define DEFAULT_BUFLEN 512
 
 Connect::Connect(GameManager& gm) : gameManager(gm), ConnectSocket(INVALID_SOCKET) {
@@ -178,45 +178,32 @@ void Connect::UpdateMap(Json::Value play)
         if (play.isMember("FirstLine"))
         {
             mapString = play["FirstLine"].asString();
-            //std::cout << mapString << std::endl;
-            for (int i = 0; i < 3; ++i) {
+            for (int i = 0; i < 3; ++i)
                 gameManager.m_map[0][i] = mapString[i];
-            }
             gameManager.m_map[0][3] = '\0';
         }
         if (play.isMember("SecondLine"))
         {
             mapString = play["SecondLine"].asString();
-            //std::cout << mapString << std::endl;
-            for (int i = 0; i < 3; ++i) {
+            for (int i = 0; i < 3; ++i)
                 gameManager.m_map[1][i] = mapString[i];
-            }
             gameManager.m_map[1][3] = '\0';
         }
         if (play.isMember("ThirdLine"))
         {
             mapString = play["ThirdLine"].asString();
-            //std::cout << mapString << std::endl;
-            for (int i = 0; i < 3; ++i) {
+            for (int i = 0; i < 3; ++i)
                 gameManager.m_map[2][i] = mapString[i];
-            }
             gameManager.m_map[2][3] = '\0';
         }
         if (play.isMember("CurrentPlayer"))
-        {
             gameManager.m_currentPlayer = play["CurrentPlayer"].asInt();
-        }
-    }
-    if (play.isMember("FirstLine") || play.isMember("SecondLine"))
-    {
-
     }
 }
 
 void Connect::HandleRead(SOCKET sock) {
     char recvbuf[DEFAULT_BUFLEN];
     int bytesRead = recv(sock, recvbuf, DEFAULT_BUFLEN, 0);
-    //std::cout << "Received : " << recvbuf << std::endl;
     if (bytesRead > 0) {
         // Analyser la chaîne JSON reçue
         std::string jsonReceived(recvbuf, bytesRead);
@@ -224,7 +211,7 @@ void Connect::HandleRead(SOCKET sock) {
         Json::Reader reader;
         bool parsingSuccessful = reader.parse(jsonReceived, root);
         if (!parsingSuccessful) {
-            // std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
+             std::cout << "Erreur lors de l'analyse du JSON reçu : " << reader.getFormattedErrorMessages() << std::endl;
             return;
         }
 
@@ -232,11 +219,8 @@ void Connect::HandleRead(SOCKET sock) {
             PickPlayer(root);
         if (root.isMember("Key") && root["Key"] == "Play")
             UpdateMap(root);
-        if (root.isMember("Key") && root["Key"] == "Score") {
+        if (root.isMember("Key") && root["Key"] == "Score")
             UpdateScore(root);
-        }
-
-
     }
 }
 
@@ -256,7 +240,7 @@ void Connect::EventDispatcher(int fdEvent, SOCKET sock) {
         HandleClose(sock);
         break;
     default:
-        //std::cout << "Event not found: " << fdEvent << " !" << std::endl;
+        std::cout << "Event not found: " << fdEvent << " !" << std::endl;
         break;
     }
 }
@@ -269,8 +253,6 @@ int Connect::Send(const char* buff) {
         CleanupWinsock();
         return 1;
     }
-    printf("Bytes Sent: %d\n", iResult);
-    //std::cout << "Sent : " << buff << std::endl;
     return 0;
 }
 
@@ -306,9 +288,7 @@ void Connect::ExecuteThreadFunction() {
     while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
     {
         if (bRet == -1)
-        {
-            // handle the error and possibly exit
-        }
+            std::cout << "Execute Thread Failed" << std::endl;
         else
         {
             TranslateMessage(&msg);

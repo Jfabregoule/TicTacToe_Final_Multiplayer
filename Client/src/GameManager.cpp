@@ -14,7 +14,6 @@ const float INPUT_BLOCK_TIME = 0.8f;
 
 
 GameManager::GameManager() {
-	//std::cout << "CLIENT" << std::endl;
 
 	m_endScreen = false;
 	m_menu = true;
@@ -42,9 +41,8 @@ GameManager::GameManager() {
 	m_previousClickState = false;
 
 
-	if (!font.loadFromFile("rsrc/font/Caveat-Regular.ttf")) {
+	if (!font.loadFromFile("rsrc/font/Caveat-Regular.ttf"))
 		std::cerr << "Erreur lors du chargement de la police" << std::endl;
-	}
 }
 
 bool	GameManager::Init() {
@@ -215,7 +213,6 @@ void GameManager::GenerateScoreText() {
 	sf::Text scoreText(username + "'s Scores :" + std::to_string(m_score), font, 30);
 	scoreText.setPosition(75, 50);
 
-
 	m_scoreText = scoreText;
 }
 
@@ -225,9 +222,7 @@ void GameManager::GenerateMap() {
 	for (int i = 0; i < 3; i++)
 	{
 		for (j; j < 3; j++)
-		{
 			m_map[i][j] = '0';
-		}
 		m_map[i][j] = '\0';
 		j = 0;
 	}
@@ -419,7 +414,7 @@ void GameManager::TieScreen() {
 	sf::Sprite	tieBackgroundSprite;
 
 	if (!tieBackgroundTexture.loadFromFile("rsrc/img/end/tiebackground.png")) {
-		//std::cout << "Error loading tie screen background image" << std::endl;
+		std::cout << "Error loading tie screen background image" << std::endl;
 		exit(1);
 	}
 	tieBackgroundSprite.setTexture(tieBackgroundTexture);
@@ -508,8 +503,6 @@ void GameManager::FormatAndSendInit() {
 
 	formatedJson = jsonString;
 
-	//std::cout << "Sending :" << formatedJson << std::endl;
-
 	sendResult = m_connect->Send(formatedJson);
 
 	delete[] jsonString;
@@ -556,8 +549,6 @@ void GameManager::FormatAndSendPlayer() {
 	strcpy_s(jsonString, jsonOutput.size() + 1, jsonOutput.c_str());
 
 	formatedJson = jsonString;
-
-	//std::cout << "Sending :" << formatedJson << std::endl;
 
 	sendResult = m_connect->Send(formatedJson);
 
@@ -757,7 +748,6 @@ void GameManager::ChoosePlayer() {
 	else if (position.y > windowSize.y / 2) {
 		if (PlayerVerification(2))
 		{
-			//std::cout << "Player 2 picked" << std::endl;
 			m_player2 = 1;
 			FormatAndSendPlayer();
 			m_menu = false;
@@ -860,32 +850,10 @@ bool GameManager::PlayerVerification(int playerNumber) {
 	{
 		m_playerNumberSelf = playerNumber;
 
-		if (playerNumber == 1) {
+		if (playerNumber == 1)
 			m_playerNumberEnemy = 2;
-		}
-		else {
+		else
 			m_playerNumberEnemy = 1;
-		}
-
-		/*if (m_playerNumberEnemy == -1) {
-
-			if (playerNumber == 1) {
-				m_playerNumberEnemy = 2;
-			}
-			else {
-				m_playerNumberEnemy = 1;
-			}
-
-			return true;
-		}
-		else if (m_playerNumberEnemy == 1 && playerNumber == 2) {
-			m_playerNumberSelf = 2;
-			return true;
-		}
-		else if (m_playerNumberEnemy == 2 && playerNumber == 1) {
-			m_playerNumberSelf = 1;
-			return true;
-		}*/
 		return true;
 	}
 	

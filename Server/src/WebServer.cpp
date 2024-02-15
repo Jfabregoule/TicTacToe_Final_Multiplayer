@@ -18,9 +18,6 @@ WebServer::WebServer() {
 }
 
 int WebServer::MapRefresh(std::string strMap) {
-    std::cout << "Hello World!\n";
-
-    //strMap = "000<br>000<br>000";
 
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = inet_addr("10.1.144.29");
@@ -31,17 +28,11 @@ int WebServer::MapRefresh(std::string strMap) {
 
     for (int i = 0; i < strMap.size(); i++)
     {
-        std::cout << "bite" << std::endl;
         if (strMap[i] == '\n')
-        {
             tempMap += "<br>";
-        }
         else
-        {
             tempMap += strMap[i];
-        }
     }
-    std::cout << strMap << tempMap << std::endl;
     strMap = tempMap;
 
 

@@ -507,7 +507,6 @@ void GameManager::Start() {
 	float	fps = 0;
 
 	Generate();
-	//Menu();
 	m_menu = false;
 	//PlayMusic("rsrc/music/theme.ogg");
 	while (m_running)
